@@ -1,137 +1,106 @@
 # Re-implementation of example 2 in Anchor Regression - Rothenhaeuser 2020
 # Author: Maic Rakitta
 # Date: 15.09.20
+##########################################################################
+set.seed(100)
 
 n <- 100
 
 library(extraDistr)
+
+# initialize training data
 A <- rsign(n)
-epsH1 <- rnorm(n)
-epsX1 <- rnorm(n)
-epsY1 <- rnorm(n)
+epsH.train <- rnorm(n)
+epsX.train <- rnorm(n)
+epsY.train <- rnorm(n)
 
-H1 <- epsH1
-X1 <- A+H1+epsX1
-Y1 <- X1+2*H1+epsY1
+H.train <- epsH.train
+X.train <- A+H.train+epsX.train
+Y.train <- X.train+2*H.train+epsY.train
 
+# initialize test data
+epsH.test <- rnorm(n)
+epsX.test <- rnorm(n)
+epsY.test <- rnorm(n)
 
+H.test <- epsH.test
+X.test <- 1.8+H.test+epsX.test
+Y.test <- X.test+2*H.test+epsY.test
 
-epsH2 <- rnorm(n)
-epsX2 <- rnorm(n)
-epsY2 <- rnorm(n)
-
-H2 <- epsH2
-X2 <- 1.8+H2+epsX2
-Y2 <- X2+2*H2+epsY2
-
-#OLS
-fit.OLS <- lm(Y1~X1+H1-1)
-
-#IV
-fit.2SLS1 <- lm(X1~A-1)
-X1.hat <- fitted.values(fit.2SLS1)
-fit.IV <- lm(Y1~X1.hat-1)
-summary(fit.OLS)
-summary(fit.IV)
-
-plot(X1,Y1)
-abline(fit.OLS, col="2")
-abline(fit.IV, col="3")
-
-#PA
-#r2 = residuals(lm(A ~ X1 + H))               
-#r2
-
-
-
-
+##########################################################################
 #Anchor regression
-Xnew <- cbind(X1,H1)
 
-gamma <- 20
-P.A <- A%*%solve(t(A)%*%A)%*%t(A)
-P.Asec <- diag(n)+(sqrt(gamma)-1)*P.A
+anchor.regression <- function(X, Y, A, gamma, n){
+  
+  P.A <- A%*%solve(t(A)%*%A)%*%t(A)
+  W <- diag(n)-(1-sqrt(gamma))*P.A
+  
+  Y.tilde <- W%*%Y
+  X.tilde <- W%*%X
+  
+  fit.AR <- fit.AR <- lm(Y.tilde~X.tilde-1)
+}
 
-Y.tilde <- P.Asec%*%Y1
-X.tilde <- P.Asec%*%Xnew
-
-fit.AR <- lm(Y.tilde~X.tilde-1)
+fit.AR <- anchor.regression(X.train, Y.train, A, 2, n)
 summary(fit.AR)
 
-#OLS
-gamma <- 1
-P.A <- A%*%solve(t(A)%*%A)%*%t(A)
-P.Asec <- diag(n)+(sqrt(gamma)-1)*P.A
-
-Y.tilde <- P.Asec%*%Y1
-X.tilde <- P.Asec%*%Xnew
-
-fit.OLS <- lm(Y.tilde~X.tilde-1)
-
-#IV
-
 
 #PA
-gamma <- 0
-P.A <- A%*%solve(t(A)%*%A)%*%t(A)
-P.Asec <- diag(n)+(sqrt(gamma)-1)*P.A
+fit.PA <- anchor.regression(X.train, Y.train, A, 0, n)
+b.PA <- coef(fit.PA)
 
-Y.tilde <- P.Asec%*%Y1
-X.tilde <- P.Asec%*%Xnew
+#OLS
+fit.OLS <- anchor.regression(X.train, Y.train, A, 1, n)
+b.OLS <- coef(fit.OLS)
 
-fit.PA <- lm(Y.tilde~X.tilde)
+#IV
+fit.2SLS.step <- lm(X.train~A-1)
+X.train.hat <- fitted.values(fit.2SLS.step)
+fit.IV <- lm(Y.train~X.train.hat-1)
+
+P.A <- A%*%solve(t(A)%*%A)%*%t(A) # manually
+X.train.tilde <- P.A%*%X.train
+b.IV <- solve(t(X.train.tilde)%*%X.train.tilde)%*%t(X.train.tilde)%*%Y.train
 
 #training data fit
-plot(X1,Y1)
+plot(X.train,Y.train)
 abline(fit.OLS, col="2")
 abline(fit.IV, col="3")
 abline(fit.PA,col="4")
-abline(fit.AR,col="5")
+legend(0, -5, legend=c("OLS", "IV", "PA"),
+       col=c(2, 3,4), lty=1, cex=0.8)
 
+#test data fit
+plot(X.test,Y.test)
+abline(fit.OLS, col="2")
+abline(fit.IV, col="3")
+abline(fit.PA,col="4")
+legend(2, -3, legend=c("OLS", "IV", "PA"),
+       col=c(2, 3,4), lty=1, cex=0.8)
+
+# Training MSE
+MSE.PA <- mean((Y.test - predict(fit.PA, data.frame(X=X.test))) ^ 2)
+MSE.OLS <- mean((Y.test - predict(fit.OLS, data.frame(X=X.test))) ^ 2)
+MSE.IV <- mean((Y.test - predict(fit.IV, data.frame(X=X.test))) ^ 2)
 
 #Calculation ex2 figure 1
-gamma.vec <- seq(0,2,by=0.001)
-Xnew2 <- data.frame(X1=X2,H1=H2)
-residuals <- numeric(length(gamma.vec))
-b.matrix <- matrix(nrow=length(gamma.vec),ncol=2)
+gamma.vec <- seq(0,3,by=0.01)
+b.vec <- numeric(length(gamma.vec))
+MSE.vec <- numeric(length(gamma.vec))
 
 for (i in 1:length(gamma.vec)){
+  
   gamma <- gamma.vec[i]
-  P.A <- A%*%solve(t(A)%*%A)%*%t(A)
-  P.Asec <- diag(n)+(sqrt(gamma)-1)*P.A
   
-  Y.tilde <- P.Asec%*%Y1
-  X.tilde <- P.Asec%*%Xnew
+  fit <- anchor.regression(X.train, Y.train, A, gamma, n)
   
-  fit <- lm(Y.tilde~X.tilde-1)
-  
-  prediction <- predict(fit, Xnew2)
-  residuals[i] <- sum((Y2-prediction)^2)
-  b.matrix[i,] <- c(coef(fit))
+  MSE.vec[i] <- mean((Y.test - predict(fit, data.frame(X=X.test))) ^ 2)
+  b.vec[i] <- coef(fit)
 }
 
-plot(gamma.vec,residuals, type = "l")
-
-prediction <- predict(fit.OLS, Xnew2)
-residual <- sum((Y2-prediction)^2)
-points(0,residual,col="2")
-
-prediction <- predict(fit.IV, Xnew2)
-residual <- sum((Y2-prediction)^2)
-points(0,residual,col="3")
-
-
-
-plot(b.matrix[,1],residuals, type = "l")
-
-points(b.matrix[which(gamma.vec==1),1],residuals[which(gamma.vec==1)],col="2") #OLS
-points(b.matrix[which(gamma.vec==0),1],residuals[which(gamma.vec==0)],col="3") #PA
-
-prediction <- predict(fit.IV, Xnew2)
-residual <- sum((Y2-prediction)^2)
-points(coef(fit)[1],residual)
-
-prediction <- predict(fit.OLS, Xnew2)
-residual <- sum((Y2-prediction)^2)
-points(coef(fit)[1],residual)
-
+plot(b.vec, MSE.vec, type = "l", xlim=c(1.4,2))
+points(b.OLS, MSE.OLS,col="2")
+points(b.IV, MSE.IV,col="3")
+points(b.PA, MSE.PA,col="4")
+legend(1.7, 20, legend=c("OLS", "IV", "PA"),
+       col=c(2, 3,4), lty=1, cex=0.8)
