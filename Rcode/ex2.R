@@ -99,8 +99,14 @@ for (i in 1:length(gamma.vec)){
 }
 
 plot(b.vec, MSE.vec, type = "l", xlim=c(1.4,2))
-points(b.OLS, MSE.OLS,col="2")
-points(b.IV, MSE.IV,col="3")
-points(b.PA, MSE.PA,col="4")
+points(b.OLS, MSE.OLS,col="2", pch=16)
+points(b.IV, MSE.IV,col="3", pch=16)
+points(b.PA, MSE.PA,col="4", pch=16)
 legend(1.7, 20, legend=c("OLS", "IV", "PA"),
-       col=c(2, 3,4), lty=1, cex=0.8)
+       col=c(2, 3,4), cex=0.8,pch=16)
+
+plot(gamma.vec, MSE.vec, type = "l")
+points(1, MSE.OLS,col="2", pch=16)
+points(0, MSE.PA,col="4", pch=16)
+legend(1.7, 20, legend=c("OLS", "PA"),
+       col=c(2, 4), cex=0.8,pch=16)
