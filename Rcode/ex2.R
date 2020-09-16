@@ -38,7 +38,7 @@ anchor.regression <- function(X, Y, A, gamma, n){
   Y.tilde <- W%*%Y
   X.tilde <- W%*%X
   
-  fit.AR <- fit.AR <- lm(Y.tilde~X.tilde-1)
+  fit.AR <- lm(Y.tilde~X.tilde-1)
 }
 
 fit.AR <- anchor.regression(X.train, Y.train, A, 2, n)
