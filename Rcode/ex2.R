@@ -2,9 +2,9 @@
 # Author: Maic Rakitta
 # Date: 15.09.20
 ##########################################################################
-set.seed(100)
+set.seed(1)
 
-n <- 100
+n <- 1000
 
 library(extraDistr)
 
@@ -58,9 +58,10 @@ fit.2SLS.step <- lm(X.train~A-1)
 X.train.hat <- fitted.values(fit.2SLS.step)
 fit.IV <- lm(Y.train~X.train.hat-1)
 
-P.A <- A%*%solve(t(A)%*%A)%*%t(A) # manually
-X.train.tilde <- P.A%*%X.train
-b.IV <- solve(t(X.train.tilde)%*%X.train.tilde)%*%t(X.train.tilde)%*%Y.train
+#P.A <- A%*%solve(t(A)%*%A)%*%t(A) # manually
+#X.train.tilde <- P.A%*%X.train
+#b.IV <- solve(t(X.train.tilde)%*%X.train.tilde)%*%t(X.train.tilde)%*%Y.train
+b.IV <- coef(fit.IV)
 
 #training data fit
 plot(X.train,Y.train)
@@ -79,12 +80,13 @@ legend(2, -3, legend=c("OLS", "IV", "PA"),
        col=c(2, 3,4), lty=1, cex=0.8)
 
 # Training MSE
-MSE.PA <- mean((Y.test - predict(fit.PA, data.frame(X=X.test))) ^ 2)
-MSE.OLS <- mean((Y.test - predict(fit.OLS, data.frame(X=X.test))) ^ 2)
-MSE.IV <- mean((Y.test - predict(fit.IV, data.frame(X=X.test))) ^ 2)
+MSE.PA <- mean((Y.test - t(X.test)*b.PA) ^ 2)
+MSE.OLS <- mean((Y.test - t(X.test)*b.OLS) ^ 2)
+MSE.IV <- mean((Y.test - t(X.test)*b.IV) ^ 2)
 
 #Calculation ex2 figure 1
-gamma.vec <- seq(0,3,by=0.01)
+#gamma.vec <- seq(0,10,by=0.01)
+gamma.vec <- seq(0,100,by=0.1)
 b.vec <- numeric(length(gamma.vec))
 MSE.vec <- numeric(length(gamma.vec))
 
@@ -94,19 +96,38 @@ for (i in 1:length(gamma.vec)){
   
   fit <- anchor.regression(X.train, Y.train, A, gamma, n)
   
-  MSE.vec[i] <- mean((Y.test - predict(fit, data.frame(X=X.test))) ^ 2)
+  MSE.vec[i] <- mean((Y.test - t(X.test)*coef(fit)) ^ 2)
   b.vec[i] <- coef(fit)
 }
 
-plot(b.vec, MSE.vec, type = "l", xlim=c(1.4,2))
+# gamma limit for comparison to IV
+gamma <- 10000
+fit <- anchor.regression(X.train, Y.train, A, gamma, n)
+MSE.limit <- mean((Y.test - t(X.test)*coef(fit)) ^ 2)
+b.limit <- coef(fit)
+
+b.vec.limit <- c(b.vec,b.limit)
+MSE.vec.limit <- c(MSE.vec,MSE.limit)
+gamma.vec.limit <- c(gamma.vec,gamma)
+
+plot(b.vec.limit, MSE.vec.limit, type = "l", xlim = c(0.95,2.05))
 points(b.OLS, MSE.OLS,col="2", pch=16)
 points(b.IV, MSE.IV,col="3", pch=16)
 points(b.PA, MSE.PA,col="4", pch=16)
-legend(1.7, 20, legend=c("OLS", "IV", "PA"),
+legend(1, 6.5, legend=c("OLS", "IV", "PA"),
        col=c(2, 3,4), cex=0.8,pch=16)
 
 plot(gamma.vec, MSE.vec, type = "l")
 points(1, MSE.OLS,col="2", pch=16)
 points(0, MSE.PA,col="4", pch=16)
-legend(1.7, 20, legend=c("OLS", "PA"),
-       col=c(2, 4), cex=0.8,pch=16)
+abline(h=MSE.IV, col=3)
+legend(60, 5.5, legend=c("OLS", "IV MSE" ,"PA"),
+       col=c(2, 3, 4), cex=0.8,pch=16)
+
+plot(gamma.vec.limit, MSE.vec.limit, type = "l")
+points(1, MSE.OLS,col="2", pch=16)
+points(0, MSE.PA,col="4", pch=16)
+abline(h=MSE.IV)
+abline(h=MSE.IV, col=3)
+legend(2000, 5.5, legend=c("OLS", "IV MSE" ,"PA"),
+       col=c(2, 3, 4), cex=0.8,pch=16)
