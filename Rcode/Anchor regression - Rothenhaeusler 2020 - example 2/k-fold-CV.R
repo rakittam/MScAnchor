@@ -7,7 +7,7 @@
 
 
 ##########################################################################
-# Optimal gamma calculation with cross validation
+# cross validation
 data <- data.frame(Y=Y.train,X=X.train, A=A)
 
 k <- 10
