@@ -4,6 +4,7 @@ rm(list=ls())
 library(glmnet)
 library(clustermq)
 
+setwd("C:/Users/maicr/Desktop/local store big data")
 load("all_tissues.preprocessed.data.RData.gz")
 
 # Intersect the genes across all data sets

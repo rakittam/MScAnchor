@@ -110,19 +110,7 @@ b.vec.limit <- c(b.vec,b.limit)
 MSE.vec.limit <- c(MSE.vec,MSE.limit)
 gamma.vec.limit <- c(gamma.vec,gamma)
 
-plot(b.vec.limit, MSE.vec.limit, type = "l", xlim = c(0.95,2.05))
-points(b.OLS, MSE.OLS,col="2", pch=16)
-points(b.IV, MSE.IV,col="3", pch=16)
-points(b.PA, MSE.PA,col="4", pch=16)
-legend(1, 6.5, legend=c("OLS", "IV", "PA"),
-       col=c(2, 3,4), cex=0.8,pch=16)
 
-plot(gamma.vec, MSE.vec, type = "l")
-points(1, MSE.OLS,col="2", pch=16)
-points(0, MSE.PA,col="4", pch=16)
-abline(h=MSE.IV, col=3)
-legend(60, 5.5, legend=c("OLS", "IV MSE" ,"PA"),
-       col=c(2, 3, 4), cex=0.8,pch=16)
 
 plot(gamma.vec.limit, MSE.vec.limit, type = "l")
 points(1, MSE.OLS,col="2", pch=16)
@@ -131,3 +119,57 @@ abline(h=MSE.IV)
 abline(h=MSE.IV, col=3)
 legend(2000, 5.5, legend=c("OLS", "IV MSE" ,"PA"),
        col=c(2, 3, 4), cex=0.8,pch=16)
+
+plot(gamma.vec, MSE.vec, type = "l")
+points(1, MSE.OLS,col="2", pch=16)
+points(0, MSE.PA,col="4", pch=16)
+abline(h=MSE.IV, col=3)
+legend(60, 5.5, legend=c("OLS", "IV MSE" ,"PA"),
+       col=c(2, 3, 4), cex=0.8,pch=16)
+
+plot(b.vec.limit, MSE.vec.limit, type = "l", xlim = c(0.95,2.05))
+points(b.OLS, MSE.OLS,col="2", pch=16)
+points(b.IV, MSE.IV,col="3", pch=16)
+points(b.PA, MSE.PA,col="4", pch=16)
+legend(1, 6.5, legend=c("OLS", "IV", "PA"),
+       col=c(2, 3,4), cex=0.8,pch=16)
+
+# adding gamma axis
+P.A <- A%*%solve(t(A)%*%A)%*%t(A)
+b.gamma <- c(1,1.25,1.5,1.75,2)
+gamma.axis <- numeric(length(b.gamma))
+for (i in 1:length(b.gamma)) {
+  b <- b.gamma[i]
+  
+  gamma.axis[i] <- -((mean(((diag(n)-P.A)%*%(Y.train - X.train * b)))^2) / 
+                    (mean((P.A%*%(Y.train - X.train * b)))^2))
+  
+}
+
+gamma.axis
+round(gamma.axis, digits = 2)
+
+library(ggplot2)
+data <- data.frame(b=b.vec.limit, gamma = gamma.vec.limit, trainMSE = MSE.vec.limit)
+ggplot(data, aes(y=trainMSE)) +
+  
+  geom_line( aes(x=b))+
+  
+  annotate("point", x = b.OLS, y = MSE.OLS, colour = 2)+
+  annotate("text", x = b.OLS-0.02, y = MSE.OLS+0.1, label = "OLS")+
+  annotate("point", x = b.IV, y = MSE.IV, colour = 3)+
+  annotate("text", x = b.IV, y = MSE.IV+0.1, label = "IV")+
+  annotate("point", x = b.PA, y = MSE.PA, colour = 4)+
+  annotate("text", x = b.PA-0.04, y = MSE.PA, label = "PA")+
+  
+  scale_x_continuous(
+    
+    # Features of the first axis
+    name = "b",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(trans= ~.,
+                        name="gamma",
+                        breaks=c(1,1.25,1.50,1.75,2.00),
+                        labels=c("inf",-2.33,-1.46,-1.21,-1.10))
+  )
