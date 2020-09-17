@@ -136,18 +136,22 @@ legend(1, 6.5, legend=c("OLS", "IV", "PA"),
 
 # adding gamma axis
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
+X <- X.train
+Y <- Y.train
+
 b.gamma <- c(1,1.25,1.5,1.75,2)
+b.gamma <- seq(1,2,by=1/9)
 gamma.axis <- numeric(length(b.gamma))
 for (i in 1:length(b.gamma)) {
   b <- b.gamma[i]
   
-  gamma.axis[i] <- -((mean(((diag(n)-P.A)%*%(Y.train - X.train * b)))^2) / 
-                    (mean((P.A%*%(Y.train - X.train * b)))^2))
+  gamma.axis[i] <- (-2*t(X)%*%X*b+t(X)%*%Y+t(Y)%*%X) * # solved by derivation of b optictive, set to 0 and solve for gamma
+    solve(2*t(X)%*%P.A%*%X*b-t(X)%*%P.A%*%Y-t(Y)%*%P.A%*%X)+1
   
 }
 
 gamma.axis
-round(gamma.axis, digits = 2)
+c("inf",17.6987,7.894467, 4.542962, 2.851117, 1.8308, 1.148405, 0.659905, 0.2929409, 0.007174545)
 
 library(ggplot2)
 data <- data.frame(b=b.vec.limit, gamma = gamma.vec.limit, trainMSE = MSE.vec.limit)
@@ -170,6 +174,6 @@ ggplot(data, aes(y=trainMSE)) +
     # Add a second axis and specify its features
     sec.axis = sec_axis(trans= ~.,
                         name="gamma",
-                        breaks=c(1,1.25,1.50,1.75,2.00),
-                        labels=c("inf",-2.33,-1.46,-1.21,-1.10))
+                        breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
+                        labels=c("inf",17.7,7.9, 4.5, 2.9, 1.8, 1.1, 0.7, 0.3, 0.0))
   )

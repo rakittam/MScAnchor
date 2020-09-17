@@ -1,6 +1,8 @@
 #Bike sharing dataset
 #https://archive.ics.uci.edu/ml/datasets/Bike+Sharing+Dataset
 
+setwd("C:/Users/maicr/Desktop/Github/MScAnchor/Rcode/anchor-regression-master/data/Bike-Sharing-Dataset")
+
 dat <- read.csv("hour.csv")
 dframe <- dat[,c("dteday","yr","mnth","holiday","weekday","workingday","weathersit","temp","atemp","hum","windspeed","cnt")]
 dframe$cnt <- residuals(lm(sqrt(cnt) ~  as.factor(holiday)+as.factor(weekday), data=dat))
