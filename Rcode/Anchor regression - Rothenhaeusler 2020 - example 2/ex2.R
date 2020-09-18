@@ -110,8 +110,6 @@ b.vec.limit <- c(b.vec,b.limit)
 MSE.vec.limit <- c(MSE.vec,MSE.limit)
 gamma.vec.limit <- c(gamma.vec,gamma)
 
-
-
 plot(gamma.vec.limit, MSE.vec.limit, type = "l")
 points(1, MSE.OLS,col="2", pch=16)
 points(0, MSE.PA,col="4", pch=16)
