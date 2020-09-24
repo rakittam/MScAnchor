@@ -66,7 +66,7 @@ MSE.IV <- mean((Y.test - t(X.test)*b.IV) ^ 2)
 data <- data.frame(Y=Y.train,X=X.train, A=A) # create data frame for CV
 
 # initialize
-k <- 10
+k <- 2
 alpha.vec <- (1:100)/101
 
 MSE.CV <- numeric(length(alpha.vec))
@@ -76,15 +76,15 @@ for (a in 1:length(alpha.vec)) {
   alpha <- alpha.vec[a] # step 1: choose alpha
   gamma.CV <- qchisq(alpha, df=1)
   
-  folds <- sample(1:k, nrow(data), replace=T) # step 2: create folds
+  folds <- c(-1,1) # step 2: create folds
   
   # step 3: for varying gamma train and test
   MSE.CV.matrix <- numeric(k)
   for (out in 1:k) { # iterating over folds
     
     # split the data into CV training and test sets
-    train <- data[folds!=out,]
-    test <- data[folds==out,]
+    train <- data[A!=folds[out],]
+    test <- data[A==folds[out],]
     
     # build the models
     model <- anchor.regression(train$X, train$Y, train$A, gamma.CV, nrow(train))

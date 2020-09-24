@@ -6,11 +6,11 @@
 ##########################################################################
 set.seed(1)
 
-n <- 1000 # number of samples from unpertubed and pertubed distribution
+n <- 10000 # number of samples from unpertubed and pertubed distribution
 
 # initialize training data
 library(extraDistr) # for rademacher distribution
-A <- rsign(n)
+A <- 2*rsign(n)
 epsH.train <- rnorm(n)
 epsX.train <- rnorm(n)
 epsY.train <- rnorm(n)
@@ -19,14 +19,6 @@ H.train <- epsH.train
 X.train <- A+H.train+epsX.train
 Y.train <- X.train+2*H.train+epsY.train
 
-# initialize test data
-epsH.test <- rnorm(n)
-epsX.test <- rnorm(n)
-epsY.test <- rnorm(n)
-
-H.test <- epsH.test
-X.test <- 1.8+H.test+epsX.test
-Y.test <- X.test+2*H.test+epsY.test
 
 ##########################################################################
 # Anchor regression
@@ -107,13 +99,32 @@ plot(alpha.vec,MSE.CV)
 plot(qchisq(alpha.vec, df=1),MSE.CV)
 
 ##########################################################################
-# coefficient, train and test MSE with optimal gamma
+# Fit AR with optimal gamma
 fit<- anchor.regression(X.train, Y.train, A, gamma.optimal, n)
 
 MSE.train <- mean((Y.train - t(X.train)*coef(fit)) ^ 2)
-MSE.test <- mean((Y.test - t(X.test)*coef(fit)) ^ 2)
 b <- coef(fit)
 
-MSE.train
-MSE.test
-b
+##########################################################################
+# Test on data with different pertubations
+v.vec <- seq(-5,5, by=0.1)
+
+MSE.test <- numeric(length(v.vec))
+for (vi in 1:length(v.vec)) {
+  v <- v.vec[vi]
+  
+  # initialize test data
+  epsH.test <- rnorm(n)
+  epsX.test <- rnorm(n)
+  epsY.test <- rnorm(n)
+  
+  H.test <- epsH.test
+  X.test <- v+H.test+epsX.test
+  Y.test <- X.test+2*H.test+epsY.test
+  
+  MSE.test[vi] <- mean((Y.test - t(X.test)*coef(fit)) ^ 2)
+}
+
+plot(v.vec,MSE.test)
+plot(v.vec,MSE.test, xlim=c(-2,2))
+
