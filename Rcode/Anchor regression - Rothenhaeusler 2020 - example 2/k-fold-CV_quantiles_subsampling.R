@@ -52,19 +52,19 @@ b.IV <- coef(fit.IV)
 data <- data.frame(Y=Y.train,X=X.train, A=A) # create data frame for CV
 
 # initialize
-k <- 2
+k <- 10
 gamma.CV <- seq(0,5,by=0.01)
 MSE.CV.matrix <- matrix(nrow = length(gamma.CV), ncol = k)
 
 for (g in 1:length(gamma.CV)) { # iterating over different gammas
   
-  folds <- c(-1,1)
+  folds <- sample(1:k, nrow(data), replace=T)
   
   for (out in 1:k) { # iterating over folds
     
     # split the data into CV training and test sets
-    train <- data[A!=folds[out],]
-    test <- data[A==folds[out],]
+    train <- data[folds!=out,]
+    test <- data[folds==out,]
     
     # build the models
     model <- anchor.regression(train$X, train$Y, train$A, gamma.CV[g], nrow(train))
@@ -129,7 +129,6 @@ lines(v.vec, MSE.test.PA, col = 4)
 lines(v.vec, MSE.test.IV, col = 5)
 legend(2.8, 4.5, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
        col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
-
 
 ##########################################################################
 # Comparison to specific shifts

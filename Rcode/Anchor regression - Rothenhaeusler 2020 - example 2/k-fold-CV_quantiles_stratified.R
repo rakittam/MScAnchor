@@ -53,13 +53,19 @@ data <- data.frame(Y=Y.train,X=X.train, A=A) # create data frame for CV
 
 # initialize
 k <- 2
-gamma.CV <- seq(0,5,by=0.01)
-MSE.CV.matrix <- matrix(nrow = length(gamma.CV), ncol = k)
+alpha.vec <- (1:100)/101
 
-for (g in 1:length(gamma.CV)) { # iterating over different gammas
+MSE.CV <- numeric(length(alpha.vec))
+gamma.optimal <- numeric(length(alpha.vec))
+for (a in 1:length(alpha.vec)) {
   
-  folds <- c(-1,1)
+  alpha <- alpha.vec[a] # step 1: choose alpha
+  gamma.CV <- qchisq(alpha, df=1)
   
+  folds <- c(-1,1) # step 2: create folds
+  
+  # step 3: for varying gamma train and test
+  MSE.CV.matrix <- numeric(k)
   for (out in 1:k) { # iterating over folds
     
     # split the data into CV training and test sets
@@ -67,19 +73,24 @@ for (g in 1:length(gamma.CV)) { # iterating over different gammas
     test <- data[A==folds[out],]
     
     # build the models
-    model <- anchor.regression(train$X, train$Y, train$A, gamma.CV[g], nrow(train))
+    model <- anchor.regression(train$X, train$Y, train$A, gamma.CV, nrow(train))
     
     # make predictions on CV test set and compute test MSE
     predictions <- test$X * model$coefficients
-    MSE.CV.matrix[g,out] <- mean((test$Y - predictions) ^ 2)
+    MSE.CV.matrix[out] <- mean((test$Y - predictions) ^ 2)
   }
+  # step 4: average over the folds
+  MSE.CV[a] <- mean(MSE.CV.matrix)
 }
+MSE.CV
 
-MSE.CV <- apply(MSE.CV.matrix,1,mean) # average over the k folds
-
-# chosen optimal gamma with CV
-gamma.optimal <- gamma.CV[which(MSE.CV==min(MSE.CV))]
+# step 5: choose optimal gamma
+alpha.vec[which(MSE.CV==min(MSE.CV))]
+gamma.optimal <- qchisq(alpha.vec[which(MSE.CV==min(MSE.CV))], df=1)
 gamma.optimal
+
+plot(alpha.vec,MSE.CV)
+plot(qchisq(alpha.vec, df=1),MSE.CV)
 
 ##########################################################################
 # Fit AR with optimal gamma
