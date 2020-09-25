@@ -1,12 +1,5 @@
 # MScAnchor
-Hello World, I´m here now!
-"A line I wrote on cmd.exe" 
-"adding a line" 
 
-"This is a line from RStudio"
+(In construction) Will add MSc description here later
 
-Blabla 2 from RStudio
-
-blabla 3
-
-blabla 4
+You can find folders for the literature review, rcode files and corresponding plots. (If data files are big, they are locally stored: ask OP)
