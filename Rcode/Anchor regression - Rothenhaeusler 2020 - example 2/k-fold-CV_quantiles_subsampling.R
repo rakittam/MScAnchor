@@ -55,8 +55,8 @@ data <- data.frame(Y=Y.train,X=X.train, A=A) # create data frame for CV
 k <- 10
 alpha.vec <- (1:100)/101
 
-MSE.CV <- numeric(length(alpha.vec))
 gamma.optimal <- numeric(length(alpha.vec))
+quantile.CV.matrix <- matrix(nrow = length(alpha.vec), ncol = k)
 for (a in 1:length(alpha.vec)) {
   
   alpha <- alpha.vec[a] # step 1: choose alpha
@@ -65,7 +65,6 @@ for (a in 1:length(alpha.vec)) {
   folds <- sample(1:k, nrow(data), replace=T) # step 2: create folds
   
   # step 3: for varying gamma train and test
-  MSE.CV.matrix <- numeric(k)
   for (out in 1:k) { # iterating over folds
     
     # split the data into CV training and test sets
@@ -77,20 +76,19 @@ for (a in 1:length(alpha.vec)) {
     
     # make predictions on CV test set and compute test MSE
     predictions <- test$X * model$coefficients
-    MSE.CV.matrix[out] <- mean((test$Y - predictions) ^ 2)
+    quantile.CV.matrix[a,out] <- quantile((test$Y - predictions) ^ 2, alpha)
   }
-  # step 4: average over the folds
-  MSE.CV[a] <- mean(MSE.CV.matrix)
 }
-MSE.CV
+quantile.CV <- apply(quantile.CV.matrix, 1, mean)
+quantile.CV
 
 # step 5: choose optimal gamma
-alpha.vec[which(MSE.CV==min(MSE.CV))]
-gamma.optimal <- qchisq(alpha.vec[which(MSE.CV==min(MSE.CV))], df=1)
+alpha.vec[which(quantile.CV==min(quantile.CV))]
+gamma.optimal <- qchisq(alpha.vec[which(quantile.CV==min(quantile.CV))], df=1)
 gamma.optimal
 
-plot(alpha.vec,MSE.CV)
-plot(qchisq(alpha.vec, df=1),MSE.CV)
+plot(alpha.vec, quantile.CV)
+plot(qchisq(alpha.vec, df=1),quantile.CV)
 
 ##########################################################################
 # Fit AR with optimal gamma

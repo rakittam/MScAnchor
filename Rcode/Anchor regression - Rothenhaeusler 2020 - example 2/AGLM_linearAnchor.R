@@ -70,8 +70,9 @@ b
 # Binomial Data
 psi <- 0.5
 ##---Example 2: logistic model and no covariates---
-m <- plogis(1+0.8*X-0.39*H)
-Y <- rbinom(n, 1, plogis(psi*X+log(m/(1-m))))
+#m <- plogis(1+0.8*X-0.39*H)
+#Y <- rbinom(n, 1, plogis(psi*X+log(m/(1-m))))
+Y <- rbinom(n, 1, plogis(psi*X))
 
 data <- data.frame(A, X, Y)
 
