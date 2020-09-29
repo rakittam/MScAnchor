@@ -10,7 +10,7 @@ n <- 1000 # number of samples from unpertubed and pertubed distribution
 
 # initialize training data
 library(extraDistr) # for rademacher distribution
-A <- 2*rsign(n)
+A <- rsign(n)
 epsH.train <- rnorm(n)
 epsX.train <- rnorm(n)
 epsY.train <- rnorm(n)
@@ -53,19 +53,13 @@ data <- data.frame(Y=Y.train,X=X.train, A=A) # create data frame for CV
 
 # initialize
 k <- 10
-alpha.vec <- (1:100)/101
+gamma.CV <- seq(0,5,by=0.01)
+MSE.CV.matrix <- matrix(nrow = length(gamma.CV), ncol = k)
 
-MSE.CV <- numeric(length(alpha.vec))
-gamma.optimal <- numeric(length(alpha.vec))
-for (a in 1:length(alpha.vec)) {
+for (g in 1:length(gamma.CV)) { # iterating over different gammas
   
-  alpha <- alpha.vec[a] # step 1: choose alpha
-  gamma.CV <- qchisq(alpha, df=1)
+  folds <- sample(1:k, nrow(data), replace=T)
   
-  folds <- sample(1:k, nrow(data), replace=T) # step 2: create folds
-  
-  # step 3: for varying gamma train and test
-  MSE.CV.matrix <- numeric(k)
   for (out in 1:k) { # iterating over folds
     
     # split the data into CV training and test sets
@@ -73,24 +67,19 @@ for (a in 1:length(alpha.vec)) {
     test <- data[folds==out,]
     
     # build the models
-    model <- anchor.regression(train$X, train$Y, train$A, gamma.CV, nrow(train))
+    model <- anchor.regression(train$X, train$Y, train$A, gamma.CV[g], nrow(train))
     
     # make predictions on CV test set and compute test MSE
     predictions <- test$X * model$coefficients
-    MSE.CV.matrix[out] <- mean((test$Y - predictions) ^ 2)
+    MSE.CV.matrix[g,out] <- mean((test$Y - predictions) ^ 2)
   }
-  # step 4: average over the folds
-  MSE.CV[a] <- mean(MSE.CV.matrix)
 }
-MSE.CV
 
-# step 5: choose optimal gamma
-alpha.vec[which(MSE.CV==min(MSE.CV))]
-gamma.optimal <- qchisq(alpha.vec[which(MSE.CV==min(MSE.CV))], df=1)
+MSE.CV <- apply(MSE.CV.matrix,1,mean) # average over the k folds
+
+# chosen optimal gamma with CV
+gamma.optimal <- gamma.CV[which(MSE.CV==min(MSE.CV))]
 gamma.optimal
-
-plot(alpha.vec,MSE.CV)
-plot(qchisq(alpha.vec, df=1),MSE.CV)
 
 ##########################################################################
 # Fit AR with optimal gamma
@@ -138,7 +127,15 @@ abline(h=MSE.train)
 lines(v.vec, MSE.test.OLS, col = 3)
 lines(v.vec, MSE.test.PA, col = 4)
 lines(v.vec, MSE.test.IV, col = 5)
-legend(2.8, 4.5, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
+legend(2.8, 8, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
+       col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
+
+plot(v.vec,MSE.test, type = "l", col=2, ylim = c(3,8), xlim= c(-3,3), ylab = "MSE", xlab = "v", main = "MSE for varying shifts v")
+abline(h=MSE.train)
+lines(v.vec, MSE.test.OLS, col = 3)
+lines(v.vec, MSE.test.PA, col = 4)
+lines(v.vec, MSE.test.IV, col = 5)
+legend(1.6, 8, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
        col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
 
 ##########################################################################

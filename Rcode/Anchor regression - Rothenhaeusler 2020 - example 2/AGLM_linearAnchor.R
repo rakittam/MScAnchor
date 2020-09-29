@@ -58,7 +58,6 @@ objec.fct <- function(b){
 
 gamma <- 0.5
 optim <- optimize(objec.fct, interval = c(-20,20))
-optim$objective
 optim$minimum
 
 fit <- anchor.regression(X, Y, A, gamma, n)
@@ -71,8 +70,9 @@ b
 # Binomial Data
 psi <- 0.5
 ##---Example 2: logistic model and no covariates---
-m <- plogis(1+0.8*X-0.39*A)
+m <- plogis(1+0.8*X-0.39*H)
 Y <- rbinom(n, 1, plogis(psi*X+log(m/(1-m))))
+
 data <- data.frame(A, X, Y)
 
 objec.binom <- function(b){
@@ -99,6 +99,11 @@ fitY.HX <- glm(formula=Y~X-1, family="binomial", data=data)
 fitIV <- ivglm(estmethod="ts", fitX.LZ=fitX.HA, fitY.LX=fitY.HX, data=data,
                ctrl=F)
 summary(fitIV)
+
+
+
+
+
 
 
 

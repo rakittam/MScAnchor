@@ -10,7 +10,7 @@ n <- 1000 # number of samples from unpertubed and pertubed distribution
 
 # initialize training data
 library(extraDistr) # for rademacher distribution
-A <- 2*rsign(n)
+A <- rsign(n)
 epsH.train <- rnorm(n)
 epsX.train <- rnorm(n)
 epsY.train <- rnorm(n)
@@ -138,9 +138,16 @@ abline(h=MSE.train)
 lines(v.vec, MSE.test.OLS, col = 3)
 lines(v.vec, MSE.test.PA, col = 4)
 lines(v.vec, MSE.test.IV, col = 5)
-legend(2.8, 4.5, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
+legend(2.8, 8, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
        col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
 
+plot(v.vec,MSE.test, type = "l", col=2, ylim = c(3,8), xlim= c(-3,3), ylab = "MSE", xlab = "v", main = "MSE for varying shifts v")
+abline(h=MSE.train)
+lines(v.vec, MSE.test.OLS, col = 3)
+lines(v.vec, MSE.test.PA, col = 4)
+lines(v.vec, MSE.test.IV, col = 5)
+legend(1.6, 8, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
+       col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
 
 ##########################################################################
 # Comparison to specific shifts
