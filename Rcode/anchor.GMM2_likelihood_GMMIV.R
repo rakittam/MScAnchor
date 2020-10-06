@@ -32,58 +32,20 @@ link.inv <- function(X,b){
 
 ##########################################################################
 # Fitting AGLM for binomial data with likelihood objective
-
-A_GMM_obj <- function(b){
-  
-  error <- (Y*(1+exp(b*X))-exp(b*X))/sqrt(exp(b*X))
-  
-  sum_1 <- sum(Y*X-X*exp(b*X)/(exp(b*X)+1))
-  sum_2 <- sum(A*error)
-  
-  return(sum_1+(gamma-1)*sum_2)
-}
-
-gamma <- 0
-b.vec <- seq(-10,10,by=0.01)
-objec.vec <- numeric(length(b.vec))
-for (i in 1:length(b.vec)) {
-  b <- b.vec[i]
-  objec.vec[i] <- A_GMM_obj(b)
-}
-plot(b.vec, objec.vec)
-index <- which(abs(objec.vec)==min(abs(objec.vec)))
-b.vec[index]
-
-
-A_GMM <- function(gamma){
-  A_GMM_obj <- function(b){
-    
-    error <- (Y*(1+exp(b*X))-exp(b*X))/sqrt(exp(b*X))
-    
-    sum_1 <- sum(Y*X-X*exp(b*X)/(exp(b*X)+1))
-    sum_2 <- sum(A*error)
-    
-    return(sum_1+(gamma-1)*sum_2)
-  }
-  
-  b.vec <- seq(-10,10,by=0.01)
-  objec.vec <- numeric(length(b.vec))
-  for (i in 1:length(b.vec)) {
-    b <- b.vec[i]
-    objec.vec[i] <- A_GMM_obj(b)
-  }
-  plot(b.vec, objec.vec)
-  index <- which(abs(objec.vec)==min(abs(objec.vec)))
-  b.vec[index]
-}
-
-A_GMM(gamma)
-
-
 objec.binom <- function(b){
   
   return(-sum(Y*log(link.inv(X,b))+(1-Y)*log(1-link.inv(X,b)))-
            (gamma-1)*sum(P.A%*%Y*log(link.inv(P.A%*%X,b))+(1-P.A%*%Y)*log(1-link.inv(P.A%*%X,b))))
+}
+
+A_GMM_obj <- function(b){
+  
+  error <- (Y*(1+exp(b*X))-exp(b*X))/sqrt(exp(b*X)) # pearson residual
+  
+  sum_1 <- sum(Y*X-X*exp(b*X)/(exp(b*X)+1)) #derivative of log-likelihood
+  sum_2 <- sum(A*error) # GMM IV objective
+  
+  return(sum_1+(gamma-1)*abs(sum_2))
 }
 
 # classic MLE
@@ -94,7 +56,8 @@ gamma <- 1
 optim <- optimize(objec.binom, interval = c(-20,20))
 optim$minimum
 
-A_GMM(gamma)
+optim <- optimize(A_GMM_obj, interval = c(-20,20))
+optim$minimum
 
 # Instrumental variables with GLM
 library(ivtools)
@@ -109,19 +72,23 @@ gamma <- 1000000
 optim <- optimize(objec.binom, interval = c(-20,20))
 optim$minimum
 
-A_GMM(gamma)
+optim <- optimize(A_GMM_obj, interval = c(-20,20))
+optim$minimum
 
 # General gamma
 gamma <- 0.5
 optim <- optimize(objec.binom, interval = c(-20,20))
 optim$minimum
 
+optim <- optimize(A_GMM_obj, interval = c(-20,20))
+optim$minimum
+
 # Looking for true optimal gamma
-gamma.vec <- seq(0,100,by=1)
+gamma.vec <- seq(1,4,by=0.01)
 b.vec <- numeric(length(gamma.vec))
 for (g in 1:length(gamma.vec)) {
   gamma <- gamma.vec[g]
-  b.vec[g] <- optimize(objec.binom, interval = c(-20,20))$minimum
+  b.vec[g] <- optimize(A_GMM_obj, interval = c(-20,20))$minimum
 }
-plot(gamma.vec,b.vec, ylim=c(0.44,0.5))
+plot(gamma.vec,b.vec)
 abline(h=psi)
