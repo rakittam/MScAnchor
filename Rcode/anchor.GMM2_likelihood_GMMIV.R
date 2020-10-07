@@ -30,6 +30,10 @@ link.inv <- function(X,b){
   return(exp(b*X)/(1+exp(b*X)))
 }
 
+# Test data
+X.test <- 1.8+H+epsX # dependend variable
+Y.test <- rbinom(n, 1, plogis(psi*X))
+
 ##########################################################################
 # Fitting AGLM for binomial data with likelihood objective
 objec.binom <- function(b){
@@ -45,7 +49,7 @@ A_GMM_obj <- function(b){
   sum_1 <- sum(Y*X-X*exp(b*X)/(exp(b*X)+1)) #derivative of log-likelihood
   sum_2 <- sum(A*error) # GMM IV objective
   
-  return(sum_1+(gamma-1)*abs(sum_2))
+  return(-1/n*sum_1+(gamma-1)*1/n*abs(sum_2))
 }
 
 # classic MLE
