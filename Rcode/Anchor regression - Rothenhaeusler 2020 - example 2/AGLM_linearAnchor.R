@@ -64,6 +64,14 @@ fit <- anchor.regression(X, Y, A, gamma, n)
 b <- coef(fit)
 b
 
+# matrix notation
+objec.fct <- function(b){
+  
+  return(t(Y-b*X)%*%(Y-b*X)+(gamma-1)*t(Y-b*X)%*%P.A%*%(Y-b*X))
+}
+
+
+
 ##########################################################################
 # Fitting AGLM for binomial data with likelihood objective
 

@@ -33,7 +33,7 @@ Y <- Y.train
 H <- H.train
 A <- A
 
-# Assuming linear model for Anchor dependency
+# Orthogonal projection on column space of anchor A
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 ##########################################################################
@@ -49,130 +49,46 @@ anchor.regression <- function(X, Y, A, gamma, n){
   fit <- lm(Y.tilde~X.tilde-1)
 }
 
-
 ##########################################################################
+# Fitting AGLM with CVXR
 library(CVXR)
-# Step 1. Define the variable to be estimated
-b <- Variable(1) 
-# Step 2. Define the objective to be optimized
-objective <- Minimize(1/n*(sum((Y-X%*%b)^2)+psi*2*sum((P.A%*%(Y-X%*%b))^2)))
-# Step 3. Create a problem to solve
-problem <- Problem(objective)
-# Step 4. Solve it!
-result <- solve(problem)
-# Step 5. Extract solution and objective value
-result$getValue(b)
 
-curvature(1/n*(sum((Y-X%*%b)^2)+psi*2*sum((P.A%*%(Y-X%*%b))^2)))
-
-
-result$
-
-psi <- gamma-1
-
-sigma <- 1
-
-
-
-gamma <- 0.5
-optim <- optimize(objec.fct, interval = c(-20,20))
-optim$minimum
-
-curvature(1/n*(sum((Y-X%*%b)^2)+psi*2*sum((P.A%*%(Y-X%*%b))^2)))
-
-is_incr(1/n*(sum((Y-X%*%b)^2)+psi*2*sum((P.A%*%(Y-X%*%b))^2)), 1)
-is_decr(1/n*(sum((Y-X%*%b)^2)+psi*2*sum((P.A%*%(Y-X%*%b))^2)), 1)
-
-
-##########################################################################
-# Fitting AR with objective fct
-objec.fct2 <- function(b){
+AGLM_normal <- function(xi){
   
-  return(sum((Y-b*X)^2)+(gamma-1)*sum(((P.A%*%(Y-b*X))^2)))
+  # Step 1. Define the variable to be estimated
+  b.hat <- Variable(1) 
+  
+  # Step 2. Define the objective to be optimized
+    loss <- sum((Y-X%*%b.hat)^2)
+  
+  anchor_penalty <- function(b.hat){
+    p.hat <- X%*%b.hat # inverse of identity link
+    r.D <- sqrt(2)*(Y-p.hat)  # deviance residuals
+    return(quad_form(r.D, P.A))
+  }
+  
+  objective <- 1/n*(loss + xi * anchor_penalty(b.hat))
+  
+  # Step 3. Create a problem to solve
+  problem <- Problem(Minimize(objective))
+  
+  # Step 4. Solve it!
+  result <- solve(problem)
+  
+  # Step 5. Extract solution and objective value
+  b.AGLM <- result$getValue(b.hat)
+  
+  return(b.AGLM)
 }
 
+# Set gamma / xi
 gamma <- 2
-optim <- optimize(objec.fct2, interval = c(-20,20))
-optim$minimum
+xi <- gamma-1
 
+# Run AGLM for normal relation
+AGLM_normal(xi)
+
+# AR
 fit <- anchor.regression(X, Y, A, gamma, n)
-b <- coef(fit)
-b
-
-# matrix notation
-objec.fct <- function(b){
-  
-  return(t(Y-b*X)%*%(Y-b*X)+(gamma-1)*t(Y-b*X)%*%P.A%*%(Y-b*X))
-}
-
-
-
-##########################################################################
-# Fitting AGLM for binomial data with likelihood objective
-
-# Binomial Data
-psi <- 0.5
-##---Example 2: logistic model and no covariates---
-#m <- plogis(1+0.8*X-0.39*H)
-#Y <- rbinom(n, 1, plogis(psi*X+log(m/(1-m))))
-Y <- rbinom(n, 1, plogis(psi*X))
-
-data <- data.frame(A, X, Y)
-
-objec.binom <- function(b){
-  
-  return(-sum(Y*b*X-log(1+exp(b*X)))-(gamma-1)*sum(P.A%*%Y*b*P.A%*%X-log(1+exp(b*P.A%*%X))))
-}
-
-# classic MLE
-gamma <- 1
-optim <- optimize(objec.binom, interval = c(-20,20))
-optim$minimum
-
-fit <- glm(Y~X-1, family="binomial")
-coef(fit)
-
-# Instrumental variables with GLM
-gamma <- 1000000
-optim <- optimize(objec.binom, interval = c(-20,20))
-optim$minimum
-
-library(ivtools)
-fitX.HA <- glm(formula=X~A-1, family="gaussian", data=data) #two-stage estimation
-fitY.HX <- glm(formula=Y~X-1, family="binomial", data=data)
-fitIV <- ivglm(estmethod="ts", fitX.LZ=fitX.HA, fitY.LX=fitY.HX, data=data,
-               ctrl=F)
-summary(fitIV)
-
-
-
-
-
-
-
-
-
-
-
-
-### IN CONSTRUCTION ###
-
-##########################################################################
-# Fitting AGLM for poisson data with likelihood objective
-
-# Poisson Data
-
-### TO INSERT HERE ####
-
-objec.poisson <- function(b){
-  
-  return(-sum(Y*b*X-exp(b*X))-(gamma-1)*sum(P.A%*%Y*b*P.A%*%X-exp(b*P.A%*%X)))
-}
-
-# classic MLE
-gamma <- 1
-optim <- optimize(objec.poisson, interval = c(-20,20))
-optim$minimum
-
-fit <- glm(Y~X-1, family="poisson")
-coef(fit)
+b.AR <- coef(fit)
+b.AR
