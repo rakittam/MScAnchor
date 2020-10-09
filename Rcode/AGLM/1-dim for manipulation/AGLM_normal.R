@@ -40,7 +40,6 @@ P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 # Anchor regression
 anchor.regression <- function(X, Y, A, gamma, n){
   
-  P.A <- A%*%solve(t(A)%*%A)%*%t(A)
   W <- diag(n)-(1-sqrt(gamma))*P.A
   
   Y.tilde <- W%*%Y
@@ -86,9 +85,61 @@ gamma <- 2
 xi <- gamma-1
 
 # Run AGLM for normal relation
-AGLM_normal(xi)
+b.CVXR <- AGLM_normal(xi)
+b.CVXR
 
 # AR
 fit <- anchor.regression(X, Y, A, gamma, n)
 b.AR <- coef(fit)
 b.AR
+
+
+##########################################################################
+# Using alabama, optim, optimize
+xi=1
+# Step 2. Define the objective to be optimized
+loss <- function(b.hat){
+  return(sum((Y-X*b.hat)^2))
+}
+
+anchor_penalty <- function(b.hat){
+  p.hat <- X*b.hat # inverse of identity link
+  r.D <- sqrt(2)*(Y-p.hat)  # deviance residuals
+  return(t(r.D)%*%P.A%*%r.D)
+}
+objective <- function(b.hat){
+  return(1/n*(loss(b.hat) + xi * anchor_penalty(b.hat)))
+}
+
+# For one dimensional unconstrained optimization
+ans1 <- optimize(f = objective, interval = c(-20,20))
+ans1
+
+# For multidimensional unconstrained optimization
+ans2 <- optim(par=1, fn=objective, method = "Brent", lower = -20, upper = 20, hessian = TRUE)
+b.AGLM <- ans2$par
+b.AGLM
+hess.mat <- ans2$hessian
+
+# Is b.AGLM local minimum?
+det(hess.mat)>0 & hess.mat[1,1]>0
+
+# For constrained optimization
+#ans3 <- auglag(par=p0, fn=objective, heq=heq, hin=hin, gr=gr)
+#ans3
+
+
+
+
+
+
+# 1 dimensional b - gradient and hessian
+gr <- function(b.hat) {
+  g <- 1/n * (2*b.hat*t(X)%*%X - t(Y)%*%X + 2*xi * (-t(X)%*%P.A%*%Y + b.hat* t(X)%*%P.A%*%X))
+  g
+}
+
+hessian <- function(b.hat) {
+  hess <- 2/n * (t(X)%*%X + t(X)%*%P.A%*%X)
+  hess
+}
