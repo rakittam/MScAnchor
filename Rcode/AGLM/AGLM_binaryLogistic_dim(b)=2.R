@@ -47,81 +47,128 @@ P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 ##########################################################################
 # Anchor GLM for binary logistic regression
-library(CVXR)
 
-AGLM_normal <- function(xi){
-  
-  # Step 1. Define the variable to be estimated
-  b.hat <- Variable(1) 
+# library(CVXR)
+# 
+# AGLM_normal <- function(xi){
+# 
+#   # Step 1. Define the variable to be estimated
+#   b.hat <- Variable(1)
+#   # Step 2. Define the objective to be optimized
+# 
+#   #loss <- -1/n*sum(Y*X%*%b.hat-m*log(1+exp(X%*%b.hat)))
+#   loss <- -sum(X[Y==1]%*%b.hat)+sum(m*logistic(X%*%b.hat))
+# 
+#   anchor_penalty <- function(b.hat){
+#     p.hat <- exp(X%*%b.hat)/(1+exp(X%*%b.hat)) # inverse of logit link
+#     r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(Y*log(Y/(m*p.hat))+(m-Y)*log((m-Y)/(m-m*p.hat)))) # deviance residuals
+#     return(quad_form(r.D, P.A))
+#   }
+# 
+#   #objective <- 1/n*loss
+#   objective <- 1/n*(loss + xi * anchor_penalty(b.hat))
+# 
+#   # Step 3. Create a problem to solve
+#   problem <- Problem(Minimize(objective))
+#   # Step 4. Solve it!
+#   result <- solve(problem)
+#   # Step 5. Extract solution and objective value
+#   b.AGLM <- result$getValue(b.hat)
+#   b.AGLM
+# 
+#   return(b.AGLM)
+# }
+
+##########################################################################
+# AGLM for Logistic regression data using optim as optimizer
+AGLM <- function(xi){
   # Step 2. Define the objective to be optimized
-  
-  #loss <- -1/n*sum(Y*X%*%b.hat-m*log(1+exp(X%*%b.hat)))
-  loss <- -sum(X[Y==1]%*%b.hat)+sum(m*logistic(X%*%b.hat))
+  loss <- function(b.hat){
+    return(-sum(Y*(X%*%b.hat)-m*log(1+exp(X%*%b.hat))))
+  }
   
   anchor_penalty <- function(b.hat){
     p.hat <- exp(X%*%b.hat)/(1+exp(X%*%b.hat)) # inverse of logit link
-    r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(Y*log(Y/(m*p.hat))+(m-Y)*log((m-Y)/(m-m*p.hat)))) # deviance residuals
-    return(quad_form(r.D, P.A))
+    
+    special.case1 <- function(Y){
+      ifelse(Y==0, 0, Y*log(Y/(m*p.hat)))
+    }
+    special.case2 <- function(Y){
+      ifelse(Y==m, 0, (m-Y)*log((m-Y)/(m-m*p.hat)))
+    }
+    
+    #r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(Y*log(Y/(m*p.hat))+(m-Y)*log((m-Y)/(m-m*p.hat)))) # deviance residuals
+    r.D <- sign(Y/m-p.hat)*sqrt(2*(special.case1(Y)+special.case2(Y))) # deviance residuals
+    return(t(r.D)%*%P.A%*%r.D)
   }
   
-  #objective <- 1/n*loss
-  objective <- 1/n*(loss + xi * anchor_penalty(b.hat))
+  objective <- function(b.hat){
+    return(1/n*(loss(b.hat) + xi * anchor_penalty(b.hat)))
+  }
   
-  # Step 3. Create a problem to solve
-  problem <- Problem(Minimize(objective))
-  # Step 4. Solve it!
-  result <- solve(problem)
-  # Step 5. Extract solution and objective value
-  b.AGLM <- result$getValue(b.hat)
-  b.AGLM
-  
-  return(b.AGLM)
+  start.val <- c(1,1)
+  ans2 <- optim(par=start.val, fn=objective, hessian = TRUE)
+  return(ans2$par)
 }
 
 ##########################################################################
 # Playground
-
 gamma <- 2 # Set gamma and xi
 xi <- gamma-1
-
-AGLM_normal(xi) # Run AGLM for normal relation
+AGLM(xi)
 
 ##########################################################################
-# Using alabama, optim, optimize
-xi=1
-# Step 2. Define the objective to be optimized
-loss <- function(b.hat){
-  return(-sum(Y*(X%*%b.hat)-m*log(1+exp(X%*%b.hat))))
+# Iterating over different hyper parameters for Rothenhaeusler e2 plot
+
+# initialize test data
+A.test <- matrix(nrow = n, ncol = 2)
+H.test <- matrix(nrow = n, ncol = 1)
+X.test <- matrix(nrow = n, ncol = 10)
+Y.test <- matrix(nrow = n, ncol = 1)
+
+for (i in 1:n) {
+  A.test[i,] <- rsign(n=2)
+  epsH.test <- rnorm(n=1, mean=0, sd=1)
+  H.test[i] <- epsH.test
+  epsX.test <- rnorm(n=10, mean=0, sd=1)
+  X.test[i,] <- 4+4+H.test[i]+epsX.test
+  Y.test[i] <- rbinom(n=1, size=m, plogis(3*X.test[i,2]+3*X.test[i,3]+H.test[i]-2*4))
 }
 
-anchor_penalty <- function(b.hat){
-  p.hat <- exp(X%*%b.hat)/(1+exp(X%*%b.hat)) # inverse of logit link
+# Objective data
+X.test <- X.test[,2:3]
+Y.test <- Y.test
+H.test <- H.test
+A.test <- A.test
+
+# Iterating over xi
+xi.vec <- seq(-1,10,by=0.1)
+b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 2)
+deviance.vec <- numeric(length(xi.vec))
+
+for (i in 1:length(xi.vec)) {
+  xi <- xi.vec[i]
+  b.AGLM.matrix[i,] <- AGLM(xi)
   
-  special.case1 <- function(Y){
-    ifelse(Y==0, 0, Y*log(Y/(m*p.hat)))
+  p.hat.test <- exp(X.test%*%b.AGLM.matrix[i,])/(1+exp(X.test%*%b.AGLM.matrix[i,])) # inverse of logit link
+  
+  special.case1 <- function(Y.test){
+    ifelse(Y.test==0, 0, Y.test*log(Y.test/(m*p.hat.test)))
   }
-  special.case2 <- function(Y){
-    ifelse(Y==m, 0, (m-Y)*log((m-Y)/(m-m*p.hat)))
+  special.case2 <- function(Y.test){
+    ifelse(Y.test==m, 0, (m-Y.test)*log((m-Y.test)/(m-m*p.hat.test)))
   }
   
-  #r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(Y*log(Y/(m*p.hat))+(m-Y)*log((m-Y)/(m-m*p.hat)))) # deviance residuals
-  r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(special.case1(Y)+special.case2(Y))) # deviance residuals
-  return(t(r.D)%*%P.A%*%r.D)
+  r.D.test <- sign(Y.test/m-p.hat.test)*sqrt(2*(special.case1(Y.test)+special.case2(Y.test))) # deviance residuals
+  deviance.vec[i] <- 1/n*t(r.D.test)%*%r.D.test
 }
 
-objective <- function(b.hat){
-  return(1/n*(loss(b.hat) + xi * anchor_penalty(b.hat)))
-}
+# Plot like in ex2 of Rothenhaeusler
+plot(xi.vec, deviance.vec, type = "l")
+xi.vec[which.min(deviance.vec)]
 
-# For one dimensional unconstrained optimization
-#ans1 <- optimize(f = objective, interval = c(-20,20))
-#ans1
+plot(b.AGLM.matrix[,1], deviance.vec)
+plot(b.AGLM.matrix[,2], deviance.vec)
 
-# For multidimensional unconstrained optimization
-start.val <- c(1,1)
-ans2 <- optim(par=start.val, fn=objective, hessian = TRUE)
-ans2$par
-
-# For constrained optimization
-#ans3 <- auglag(par=c(1,1), fn=objective)
-#ans3
+plot(b.AGLM.matrix[,1], deviance.vec, type="l")
+lines(b.AGLM.matrix[,2], deviance.vec)

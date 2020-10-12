@@ -46,9 +46,7 @@ A <- A.train
 # Orthogonal projection on column space of anchor A
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
-
-
-# initialize training data
+# initialize test data
 A.test <- matrix(nrow = n, ncol = 2)
 H.test <- matrix(nrow = n, ncol = 1)
 X.test <- matrix(nrow = n, ncol = 10)
@@ -92,7 +90,7 @@ AGLM <- function(xi){
     }
     
     #r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(Y*log(Y/(m*p.hat))+(m-Y)*log((m-Y)/(m-m*p.hat)))) # deviance residuals
-    r.D <- (Y/m-p.hat)/abs(Y/m-p.hat)*sqrt(2*(special.case1(Y)+special.case2(Y))) # deviance residuals
+    r.D <- sign(Y/m-p.hat)*sqrt(2*(special.case1(Y)+special.case2(Y))) # deviance residuals
     return(t(r.D)%*%P.A%*%r.D)
   }
   
@@ -112,13 +110,27 @@ xi <- gamma-1
 AGLM(xi)
 
 # Iterating over different hyper parameters
-xi.vec <- -1:10
+xi.vec <- seq(-1,10,by=0.1)
 b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 2)
+deviance.vec <- numeric(length(xi.vec))
+
 for (i in 1:length(xi.vec)) {
   xi <- xi.vec[i]
   b.AGLM.matrix[i,] <- AGLM(xi)
+  
+  p.hat.test <- exp(X.test%*%b.AGLM.matrix[i,])/(1+exp(X.test%*%b.AGLM.matrix[i,])) # inverse of logit link
+  
+  special.case1 <- function(Y.test){
+    ifelse(Y.test==0, 0, Y.test*log(Y.test/(m*p.hat.test)))
+  }
+  special.case2 <- function(Y.test){
+    ifelse(Y.test==m, 0, (m-Y.test)*log((m-Y.test)/(m-m*p.hat.test)))
+  }
+  
+  r.D.test <- sign(Y.test/m-p.hat.test)*sqrt(2*(special.case1(Y.test)+special.case2(Y.test))) # deviance residuals
+  deviance.vec[i] <- t(r.D.test)%*%r.D.test
 }
 
-plot(xi.vec, b.AGLM.matrix[,1], type = "l")
-lines(xi.vec, b.AGLM.matrix[,2])
-abline(h=3)
+# Plot like in ex2 of Rothenhaeusler
+plot(xi.vec, deviance.vec, type = "l")
+xi.vec[which.min(deviance.vec)]

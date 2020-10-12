@@ -11,6 +11,7 @@ n <- 300 # number of samples from unpertubed and pertubed distribution
 # sample anchor coefficients
 g1 <- rnorm(n=1)
 g2 <- rnorm(n=1)
+g3 <- -2
 
 # initialize training data
 A.train <- matrix(nrow = n, ncol = 2)
@@ -29,7 +30,7 @@ for (i in 1:n) {
   X.train[i,] <- g1*A.train[i,1]+g2*A.train[i,2]+H.train[i]+epsX.train
   
   epsY.train <- rnorm(n=1, mean=0, sd=0.25^2)
-  Y.train[i] <- 3*X.train[i,2]+3*X.train[i,3]+H.train[i]-2*A.train[i,1]+epsY.train
+  Y.train[i] <- 3*X.train[i,2]+3*X.train[i,3]+H.train[i]+g3*A.train[i,1]+epsY.train
 }
 
 # Objective data
@@ -64,15 +65,15 @@ AGLM_normal <- function(xi){
   b.hat <- Variable(ncol(X)) 
   
   # Step 2. Define the objective to be optimized
-  loss <- sum((Y-X%*%b.hat)^2)
+  loss <- -sum((Y-X%*%b.hat)^2)
   
   anchor_penalty <- function(b.hat){
     p.hat <- X%*%b.hat # inverse of identity link
-    r.D <- sqrt(2)*(Y-p.hat)  # deviance residuals
+    r.D <- Y-p.hat  # deviance residuals
     return(quad_form(r.D, P.A))
   }
   
-  objective <- 1/n*(loss + xi * anchor_penalty(b.hat))
+  objective <- 1/n*(-loss + xi * anchor_penalty(b.hat))
   
   # Step 3. Create a problem to solve
   problem <- Problem(Minimize(objective))
@@ -91,7 +92,6 @@ gamma <- 2
 xi <- gamma-1
 
 # Run AGLM for normal relation
-AGLM_normal(xi)
 
 # AR
 fit <- anchor.regression(X, Y, A, gamma, n)
@@ -101,34 +101,96 @@ b.AR
 
 ##########################################################################
 # Using alabama, optim, optimize
-xi=1
-# Step 2. Define the objective to be optimized
-loss <- function(b.hat){
-  return(sum((Y-X%*%b.hat)^2))
+AGLM <- function(xi){
+  # Step 2. Define the objective to be optimized
+  loss <- function(b.hat){
+    return(-sum((Y-X%*%b.hat)^2))
+  }
+  
+  anchor_penalty <- function(b.hat){
+    p.hat <- X%*%b.hat # inverse of identity link
+    r.D <- Y-p.hat  # deviance residuals
+    return(t(r.D)%*%P.A%*%r.D)
+  }
+  objective <- function(b.hat){
+    return(1/n*(-loss(b.hat) + xi * anchor_penalty(b.hat)))
+  }
+  
+  # For one dimensional unconstrained optimization
+  #ans1 <- optimize(f = objective, interval = c(-20,20))
+  #ans1
+  
+  # For multidimensional unconstrained optimization
+  ans2 <- optim(par=c(1,1), fn=objective, hessian = TRUE)
+  b.AGLM <- ans2$par
+  b.AGLM
+  hess.mat <- ans2$hessian
+  
+  # Is b.AGLM local minimum?
+  det(hess.mat)>0 & hess.mat[1,1]>0
+  
+  # For constrained optimization
+  #ans3 <- auglag(par=c(1,1), fn=objective)
+  #ans3
+  return(b.AGLM)
 }
 
-anchor_penalty <- function(b.hat){
-  p.hat <- X%*%b.hat # inverse of identity link
-  r.D <- sqrt(2)*(Y-p.hat)  # deviance residuals
-  return(t(r.D)%*%P.A%*%r.D)
+AGLM(1)
+
+##########################################################################
+# Iterating over different hyper parameters for Rothenhaeusler e2 plot
+
+g1.test <- 1
+g2.test <- 1
+g3.test <- -2
+  
+# initialize training data
+A.test <- matrix(nrow = n, ncol = 2)
+H.test <- matrix(nrow = n, ncol = 1)
+X.test <- matrix(nrow = n, ncol = 10)
+Y.test <- matrix(nrow = n, ncol = 1)
+
+for (i in 1:n) {
+  
+  A.test[i,] <- rnorm(n=2, mean=0, sd=1)
+  
+  epsH.test <- rnorm(n=1, mean=0, sd=1)
+  H.test[i] <- epsH.test
+  
+  epsX.test <- rnorm(n=10, mean=0, sd=1)
+  X.test[i,] <- g1.test*A.test[i,1]+g2.test*A.test[i,2]+H.test[i]+epsX.test
+  
+  epsY.test <- rnorm(n=1, mean=0, sd=0.25^2)
+  Y.test[i] <- 3*X.test[i,2]+3*X.test[i,3]+H.test[i]+g3.test*A.test[i,1]+epsY.test
 }
-objective <- function(b.hat){
-  return(1/n*(loss(b.hat) + xi * anchor_penalty(b.hat)))
+
+# Objective data
+X.test <- X.test[,2:3]
+Y.test <- Y.test
+H.test <- H.test
+A.test <- A.test
+
+# Iterating over xi
+xi.vec <- seq(0,10,by=0.1)
+b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 2)
+deviance.vec <- numeric(length(xi.vec))
+
+for (i in 1:length(xi.vec)) {
+  xi <- xi.vec[i]
+  b.AGLM.matrix[i,] <- AGLM(xi)
+  
+  p.hat.test <- X.test%*%b.AGLM.matrix[i,]# inverse of logit link
+  
+  r.D.test <- Y-p.hat.test # deviance residuals
+  deviance.vec[i] <- 1/n*t(r.D.test)%*%r.D.test
 }
 
-# For one dimensional unconstrained optimization
-#ans1 <- optimize(f = objective, interval = c(-20,20))
-#ans1
+# Plot like in ex2 of Rothenhaeusler
+plot(xi.vec, deviance.vec, type = "l")
+xi.vec[which.min(deviance.vec)]
 
-# For multidimensional unconstrained optimization
-ans2 <- optim(par=c(1,1), fn=objective, hessian = TRUE)
-b.AGLM <- ans2$par
-b.AGLM
-hess.mat <- ans2$hessian
+plot(b.AGLM.matrix[,1], deviance.vec)
+plot(b.AGLM.matrix[,2], deviance.vec)
 
-# Is b.AGLM local minimum?
-det(hess.mat)>0 & hess.mat[1,1]>0
-
-# For constrained optimization
-#ans3 <- auglag(par=c(1,1), fn=objective)
-#ans3
+plot(b.AGLM.matrix[,1], deviance.vec, type="l")
+lines(b.AGLM.matrix[,2], deviance.vec)
