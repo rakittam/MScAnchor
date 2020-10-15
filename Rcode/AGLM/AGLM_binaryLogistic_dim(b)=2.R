@@ -8,12 +8,10 @@ set.seed(1)
 
 n <- 1000 # number of samples from unpertubed and pertubed distribution
 
-# initialize data
+# Initialize data
 library(extraDistr) # for rademacher distribution
 
-m <- 5
-
-# sample anchor coefficients
+# Anchor coefficients
 g1 <- rnorm(n=1)
 g2 <- rnorm(n=1)
 
@@ -22,6 +20,8 @@ A.train <- matrix(nrow = n, ncol = 2)
 H.train <- matrix(nrow = n, ncol = 1)
 X.train <- matrix(nrow = n, ncol = 10)
 Y.train <- matrix(nrow = n, ncol = 1)
+
+m <- 5 # number of trials for binary distribution
 
 for (i in 1:n) {
   
@@ -50,7 +50,7 @@ P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 # library(CVXR)
 # 
-# AGLM_normal <- function(xi){
+# AGLM_CVXR <- function(xi){
 # 
 #   # Step 1. Define the variable to be estimated
 #   b.hat <- Variable(1)
@@ -82,11 +82,13 @@ P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 ##########################################################################
 # AGLM for Logistic regression data using optim as optimizer
 AGLM <- function(xi){
-  # Step 2. Define the objective to be optimized
+  
+  # Step 1. Define the objective loss
   loss <- function(b.hat){
     return(-sum(Y*(X%*%b.hat)-m*log(1+exp(X%*%b.hat))))
   }
   
+  # Step 2. Define anchor penalty
   anchor_penalty <- function(b.hat){
     p.hat <- exp(X%*%b.hat)/(1+exp(X%*%b.hat)) # inverse of logit link
     
@@ -102,10 +104,12 @@ AGLM <- function(xi){
     return(t(r.D)%*%P.A%*%r.D)
   }
   
+  # Step 3. Contruct objective by 1. and 2.
   objective <- function(b.hat){
     return(1/n*(loss(b.hat) + xi * anchor_penalty(b.hat)))
   }
   
+  # Set start value for optimization
   start.val <- c(1,1)
   ans2 <- optim(par=start.val, fn=objective, hessian = TRUE)
   return(ans2$par)
@@ -120,7 +124,7 @@ AGLM(xi)
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
-# initialize test data
+# Initialize test data
 A.test <- matrix(nrow = n, ncol = 2)
 H.test <- matrix(nrow = n, ncol = 1)
 X.test <- matrix(nrow = n, ncol = 10)

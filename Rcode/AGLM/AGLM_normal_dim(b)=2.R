@@ -8,12 +8,12 @@ set.seed(1)
 
 n <- 300 # number of samples from unpertubed and pertubed distribution
 
-# sample anchor coefficients
+# Anchor coefficients
 g1 <- rnorm(n=1)
 g2 <- rnorm(n=1)
 g3 <- -2
 
-# initialize training data
+# Initialize training data
 A.train <- matrix(nrow = n, ncol = 2)
 H.train <- matrix(nrow = n, ncol = 1)
 X.train <- matrix(nrow = n, ncol = 10)
@@ -43,7 +43,7 @@ A <- A.train
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 ##########################################################################
-# Anchor regression
+# Linear Anchor Regression
 anchor.regression <- function(X, Y, A, gamma, n){
   
   P.A <- A%*%solve(t(A)%*%A)%*%t(A)
@@ -56,10 +56,10 @@ anchor.regression <- function(X, Y, A, gamma, n){
 }
 
 ##########################################################################
-# Fitting AGLM with CVXR
+# AGLM with CVXR
 library(CVXR)
 
-AGLM_normal <- function(xi){
+AGLM_CVXR <- function(xi){
   
   # Step 1. Define the variable to be estimated
   b.hat <- Variable(ncol(X)) 
@@ -91,27 +91,32 @@ AGLM_normal <- function(xi){
 gamma <- 2
 xi <- gamma-1
 
-# Run AGLM for normal relation
-
-# AR
+# Classic linear AR Method
 fit <- anchor.regression(X, Y, A, gamma, n)
 b.AR <- coef(fit)
 b.AR
 
+# CVXR AR
+b.AGLM_CVXR <- AGLM_CVXR(xi)
+b.AGLM_CVXR
 
 ##########################################################################
-# Using alabama, optim, optimize
+# AGLM using alabama, optim, optimize
+
 AGLM <- function(xi){
-  # Step 2. Define the objective to be optimized
+  # Step 1. Define the objective loss
   loss <- function(b.hat){
     return(-sum((Y-X%*%b.hat)^2))
   }
   
+  # Step 2. Define anchor penalty
   anchor_penalty <- function(b.hat){
     p.hat <- X%*%b.hat # inverse of identity link
     r.D <- Y-p.hat  # deviance residuals
     return(t(r.D)%*%P.A%*%r.D)
   }
+  
+  # Step 3. Contruct objective by 1. and 2.
   objective <- function(b.hat){
     return(1/n*(-loss(b.hat) + xi * anchor_penalty(b.hat)))
   }
@@ -135,7 +140,8 @@ AGLM <- function(xi){
   return(b.AGLM)
 }
 
-AGLM(1)
+b.AGLM <- AGLM(1)
+b.AGLM
 
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
@@ -144,22 +150,18 @@ g1.test <- 1
 g2.test <- 1
 g3.test <- -2
   
-# initialize training data
+# Initialize test data
 A.test <- matrix(nrow = n, ncol = 2)
 H.test <- matrix(nrow = n, ncol = 1)
 X.test <- matrix(nrow = n, ncol = 10)
 Y.test <- matrix(nrow = n, ncol = 1)
 
 for (i in 1:n) {
-  
   A.test[i,] <- rnorm(n=2, mean=0, sd=1)
-  
   epsH.test <- rnorm(n=1, mean=0, sd=1)
   H.test[i] <- epsH.test
-  
   epsX.test <- rnorm(n=10, mean=0, sd=1)
   X.test[i,] <- g1.test*A.test[i,1]+g2.test*A.test[i,2]+H.test[i]+epsX.test
-  
   epsY.test <- rnorm(n=1, mean=0, sd=0.25^2)
   Y.test[i] <- 3*X.test[i,2]+3*X.test[i,3]+H.test[i]+g3.test*A.test[i,1]+epsY.test
 }

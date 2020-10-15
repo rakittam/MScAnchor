@@ -1,5 +1,5 @@
 # Anchor regression using GLM approach and CCXR, optim, alabama
-# Normal linear regression
+# Normal linear regression with unknown variance
 #
 # Author: Maic Rakitta
 # Date: 07.10.20
@@ -8,11 +8,11 @@ set.seed(1)
 
 n <- 300 # number of samples from unpertubed and pertubed distribution
 
-# sample anchor coefficients
+# Anchor coefficients
 g1 <- rnorm(n=1)
 g2 <- rnorm(n=1)
 
-# initialize training data
+# Initialize training data
 A.train <- matrix(nrow = n, ncol = 2)
 H.train <- matrix(nrow = n, ncol = 1)
 X.train <- matrix(nrow = n, ncol = 10)
@@ -42,22 +42,11 @@ A <- A.train
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 ##########################################################################
-# Anchor regression
-anchor.regression <- function(X, Y, A, gamma, n){
-  
-  P.A <- A%*%solve(t(A)%*%A)%*%t(A)
-  W <- diag(n)-(1-sqrt(gamma))*P.A
-  
-  Y.tilde <- W%*%Y
-  X.tilde <- W%*%X
-  
-  fit <- lm(Y.tilde~X.tilde-1)
-}
-
-##########################################################################
-# Using alabama, optim, optimize
+# AGLM using alabama, optim, optimize
 
 AGLM <- function(xi){
+  
+  # Step 1. Define the objective loss
   # hat.vec is vector that combines parameter to be estimated b.hat and sigma^2
   loss <- function(hat.vec){
     b.hat <- hat.vec[1:2]
@@ -65,6 +54,7 @@ AGLM <- function(xi){
     return(-n/2*log(2*pi*s2)*-1/(2*s2)*sum((Y-X%*%b.hat)^2))
   }
   
+  # Step 2. Define anchor penalty
   anchor_penalty <- function(hat.vec){
     b.hat <- hat.vec[1:2]
     s2 <- hat.vec[3]
@@ -72,6 +62,8 @@ AGLM <- function(xi){
     r.D <- 1/sqrt(s2)*(Y-p.hat)  # deviance residuals
     return(t(r.D)%*%P.A%*%r.D)
   }
+  
+  # Step 3. Contruct objective by 1. and 2.
   objective <- function(hat.vec){
     return(1/n*(-loss(hat.vec) + xi * anchor_penalty(hat.vec)))
   }
@@ -88,7 +80,7 @@ AGLM <- function(xi){
   
   # Is b.AGLM local minimum?
   det(hess.mat)>0 & hess.mat[1,1]>0
-  
+   
   # For constrained optimization
   #ans3 <- auglag(par=c(1,1), fn=objective)
   #ans3
