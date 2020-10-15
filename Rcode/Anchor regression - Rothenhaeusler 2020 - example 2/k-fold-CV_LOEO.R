@@ -135,8 +135,8 @@ abline(h=MSE.train)
 lines(v.vec, MSE.test.OLS, col = 3)
 lines(v.vec, MSE.test.PA, col = 4)
 lines(v.vec, MSE.test.IV, col = 5)
-legend(1.6, 8, legend=c("CV train MSE", "CV", "OLS", "PA", "IV"),
-       col=c(1, 2, 3, 4, 5), cex=0.8,pch=16)
+legend(1.6, 8, legend=c("CV train MSE", "OLS = CV", "PA", "IV"),
+       col=c(1, 3, 4, 5), cex=0.8,pch=16)
 
 ##########################################################################
 # Comparison to specific shifts
