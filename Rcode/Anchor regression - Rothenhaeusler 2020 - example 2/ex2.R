@@ -7,7 +7,7 @@ set.seed(1)
 
 n <- 1000 # number of samples from unpertubed and pertubed distribution
 
-# initialize training data
+# Initialize training data
 library(extraDistr) # for rademacher distribution
 A <- rsign(n)
 epsH.train <- rnorm(n)
@@ -18,13 +18,13 @@ H.train <- epsH.train
 X.train <- A+H.train+epsX.train
 Y.train <- X.train+2*H.train+epsY.train
 
-# initialize test data
+# Initialize test data
 epsH.test <- rnorm(n)
 epsX.test <- rnorm(n)
 epsY.test <- rnorm(n)
 
 H.test <- epsH.test
-X.test <- 1.8+H.test+epsX.test
+X.test <- 1.8+H.test+epsX.test # intervention v = 1.8
 Y.test <- X.test+2*H.test+epsY.test
 
 ##########################################################################
@@ -39,6 +39,10 @@ anchor.regression <- function(X, Y, A, gamma, n){
   
   fit <- lm(Y.tilde~X.tilde-1)
 }
+
+
+##########################################################################
+# Calculating parameter beta for specific cases
 
 # PA = AR for gamma = 0
 fit.PA <- anchor.regression(X.train, Y.train, A, 0, n)
@@ -58,7 +62,7 @@ fit.IV <- lm(Y.train~X.train.hat-1)
 #b.IV <- solve(t(X.train.tilde)%*%X.train.tilde)%*%t(X.train.tilde)%*%Y.train
 b.IV <- coef(fit.IV)
 
-# training data plot
+# Training data plot
 plot(X.train,Y.train)
 abline(fit.OLS, col="2")
 abline(fit.IV, col="3")
@@ -66,7 +70,7 @@ abline(fit.PA,col="4")
 legend(0, -5, legend=c("OLS", "IV", "PA"),
        col=c(2, 3,4), lty=1, cex=0.8)
 
-# test data plot
+# Test data plot
 plot(X.test,Y.test)
 abline(fit.OLS, col="2")
 abline(fit.IV, col="3")
@@ -90,7 +94,7 @@ for (i in 1:length(gamma.vec)){
   b.vec[i] <- coef(fit)
 }
 
-# gamma big enough to compare with IV
+# Gamma big enough to compare with IV
 gamma <- 10000
 fit <- anchor.regression(X.train, Y.train, A, gamma, n)
 MSE.limit <- mean((Y.test - t(X.test)*coef(fit)) ^ 2)
@@ -100,12 +104,12 @@ b.vec.limit <- c(b.vec,b.limit)
 MSE.vec.limit <- c(MSE.vec,MSE.limit)
 gamma.vec.limit <- c(gamma.vec,gamma)
 
-# test MSE for specific cases
+# Test MSE for specific cases
 MSE.PA <- mean((Y.test - t(X.test)*b.PA) ^ 2)
 MSE.OLS <- mean((Y.test - t(X.test)*b.OLS) ^ 2)
 MSE.IV <- mean((Y.test - t(X.test)*b.IV) ^ 2)
 
-# plots
+# Plots
 plot(gamma.vec.limit, MSE.vec.limit, type = "l")
 points(1, MSE.OLS,col="2", pch=16)
 points(0, MSE.PA,col="4", pch=16)
@@ -128,7 +132,7 @@ points(b.PA, MSE.PA,col="4", pch=16)
 legend(1, 6.5, legend=c("OLS", "IV", "PA"),
        col=c(2, 3,4), cex=0.8,pch=16)
 
-# final plot: b and gamma vs test MSE
+# Final plot: b and gamma vs test MSE
 P.A <- A%*%solve(t(A)%*%A)%*%t(A) # first calulate coresponding gammas
 X <- X.train
 Y <- Y.train
@@ -172,7 +176,7 @@ ggplot(data, aes(y=testMSE)) +
                         labels=c("inf",17.7,7.9, 4.5, 2.9, 1.8, 1.1, 0.7, 0.3, 0.0))
   )
 
-# unobserved optimal gamma
+# Unobserved optimal gamma
 b.opt <- b.vec.limit[which(MSE.vec.limit==min(MSE.vec.limit))]
 gamma.opt <- (-2*t(X)%*%X*b.opt+t(X)%*%Y+t(Y)%*%X) * # solved by derivation of b optictive, set to 0 and solve for gamma
   solve(2*t(X)%*%P.A%*%X*b.opt-t(X)%*%P.A%*%Y-t(Y)%*%P.A%*%X)+1
