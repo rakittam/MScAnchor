@@ -17,7 +17,7 @@ g2 <- rnorm(n=1)
 g3 <- -2
 
 # initialize training data
-A.train <- matrix(nrow = n, ncol = 2)
+A.train <- matrix(nrow = n, ncol = 1)
 H.train <- matrix(nrow = n, ncol = 1)
 X.train <- matrix(nrow = n, ncol = 10)
 Y.train <- matrix(nrow = n, ncol = 1)
@@ -26,19 +26,19 @@ m <- 5 # number of trials for binary distribution
 
 for (i in 1:n) {
   
-  A.train[i,] <- rsign(n=2)
+  A.train[i] <- rsign(n=1)
   
   epsH.train <- rnorm(n=1, mean=0, sd=1)
   H.train[i] <- epsH.train
   
   epsX.train <- rnorm(n=10, mean=0, sd=1)
-  X.train[i,] <- g1*A.train[i,1]+g2*A.train[i,2]+H.train[i]+epsX.train
+  X.train[i,] <- g1*A.train[i]+H.train[i]+epsX.train
   
-  Y.train[i] <- rbinom(n=1, size=m, plogis(3*X.train[i,2]+3*X.train[i,3]+H.train[i]+g3*A.train[i,1]))
+  Y.train[i] <- rbinom(n=1, size=m, plogis(3*X.train[i,2]+H.train[i]))
 }
 
 # Objective data
-X <- X.train[,2:3]
+X <- X.train[,2]
 Y <- Y.train
 H <- H.train
 A <- A.train
@@ -86,12 +86,12 @@ AGLM <- function(xi){
   
   # Step 1. Define the objective loss
   loss <- function(b.hat){
-    return(-sum(Y*(X%*%b.hat)-m*log(1+exp(X%*%b.hat))))
+    return(-sum(Y*(X*b.hat)-m*log(1+exp(X*b.hat))))
   }
   
   # Step 2. Define anchor penalty
   anchor_penalty <- function(b.hat){
-    p.hat <- exp(X%*%b.hat)/(1+exp(X%*%b.hat)) # inverse of logit link
+    p.hat <- exp(X*b.hat)/(1+exp(X*b.hat)) # inverse of logit link
     
     special.case1 <- function(Y){
       ifelse(Y==0, 0, Y*log(Y/(m*p.hat)))
@@ -111,9 +111,9 @@ AGLM <- function(xi){
   }
   
   # Set start value for optimization
-  start.val <- c(1,1)
-  ans2 <- optim(par=start.val, fn=objective, hessian = TRUE)
-  return(ans2$par)
+  start.val <- c(1)
+  ans2 <- optimize(interval = c(-10,10), f= objective)
+  return(ans2$minimum)
 }
 
 ##########################################################################
@@ -125,41 +125,42 @@ AGLM(xi)
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
-g1.test <- -0.5
-g2.test <- 0.1
-g3.test <- -2
+g1.test <- 0 # 0, i.e. chooses MLE, 
+g1.test <- 0.2 # close to xi=1 => gamma = 2
+g1.test <- -0.2 # 0.1
+g1.test <- -0.9 # 4.9
 
 # Initialize test data
-A.test <- matrix(nrow = n, ncol = 2)
+A.test <- matrix(nrow = n, ncol = 1)
 H.test <- matrix(nrow = n, ncol = 1)
 X.test <- matrix(nrow = n, ncol = 10)
 Y.test <- matrix(nrow = n, ncol = 1)
 
 for (i in 1:n) {
-  A.test[i,] <- rsign(n=2)
+  A.test[i] <- rsign(n=1)
   epsH.test <- rnorm(n=1, mean=0, sd=1)
   H.test[i] <- epsH.test
   epsX.test <- rnorm(n=10, mean=0, sd=1)
-  X.test[i,] <- g1.test*A.test[i,1]+g2.test*A.test[i,2]+H.test[i]+epsX.test
-  Y.test[i] <- rbinom(n=1, size=m, plogis(3*X.test[i,2]+3*X.test[i,3]+H.test[i]+g3.test*A.train[i,1]))
+  X.test[i,] <- g1.test*A.test[i]+H.test[i]+epsX.test
+  Y.test[i] <- rbinom(n=1, size=m, plogis(3*X.test[i,2]+H.test[i]))
 }
 
 # Objective data
-X.test <- X.test[,2:3]
+X.test <- X.test[,2]
 Y.test <- Y.test
 H.test <- H.test
 A.test <- A.test
 
 # Iterating over xi
 xi.vec <- seq(-1,10,by=0.1)
-b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 2)
+b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 1)
 deviance.vec <- numeric(length(xi.vec))
 
 for (i in 1:length(xi.vec)) {
   xi <- xi.vec[i]
-  b.AGLM.matrix[i,] <- AGLM(xi)
+  b.AGLM.matrix[i] <- AGLM(xi)
   
-  p.hat.test <- exp(X.test%*%b.AGLM.matrix[i,])/(1+exp(X.test%*%b.AGLM.matrix[i,])) # inverse of logit link
+  p.hat.test <- exp(X.test*b.AGLM.matrix[i])/(1+exp(X.test*b.AGLM.matrix[i])) # inverse of logit link
   
   special.case1 <- function(Y.test){
     ifelse(Y.test==0, 0, Y.test*log(Y.test/(m*p.hat.test)))
@@ -176,8 +177,4 @@ for (i in 1:length(xi.vec)) {
 plot(xi.vec, deviance.vec, type = "l")
 xi.vec[which.min(deviance.vec)]
 
-#plot(b.AGLM.matrix[,1], deviance.vec)
-#plot(b.AGLM.matrix[,2], deviance.vec)
-
-#plot(b.AGLM.matrix[,1], deviance.vec, type="l")
-#lines(b.AGLM.matrix[,2], deviance.vec)
+plot(b.AGLM.matrix, deviance.vec)

@@ -173,7 +173,7 @@ H.test <- H.test
 A.test <- A.test
 
 # Iterating over xi
-xi.vec <- seq(0,10,by=0.1)
+xi.vec <- seq(-1,10,by=0.1)
 b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 2)
 deviance.vec <- numeric(length(xi.vec))
 
