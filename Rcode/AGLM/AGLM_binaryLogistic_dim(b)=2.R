@@ -4,7 +4,7 @@
 # Author: Maic Rakitta
 # Date: 07.10.20
 ##########################################################################
-set.seed(1)
+set.seed(2)
 
 n <- 1000 # number of samples from unpertubed and pertubed distribution
 
@@ -12,8 +12,8 @@ n <- 1000 # number of samples from unpertubed and pertubed distribution
 library(extraDistr) # for rademacher distribution
 
 # Anchor coefficients
-g1 <- rnorm(n=1)
-g2 <- rnorm(n=1)
+g1 <- 0.5
+g2 <- -0.2
 g3 <- -2
 
 # initialize training data
@@ -125,7 +125,7 @@ AGLM(xi)
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
-g1.test <- -0.5
+g1.test <- -1
 g2.test <- 0.1
 g3.test <- -2
 
@@ -172,12 +172,35 @@ for (i in 1:length(xi.vec)) {
   deviance.vec[i] <- 1/n*t(r.D.test)%*%r.D.test
 }
 
+# Smallest deviance xi
+xi.opt <- xi.vec[which.min(deviance.vec)]
+xi.opt
+b.opt <- AGLM(xi.opt)
+
+# MLE
+xi <- 0
+b.MLE <- AGLM(xi)
+
+# PA
+xi <- -1
+b.PA <- AGLM(xi)
+
+# IV
+xi <- 100
+b.IV <- AGLM(xi)
+
 # Plot like in ex2 of Rothenhaeusler
 plot(xi.vec, deviance.vec, type = "l")
-xi.vec[which.min(deviance.vec)]
+abline(v=xi.opt, col = 1)
+abline(v=0, col = 2)
+abline(v=-1, col = 3)
 
-#plot(b.AGLM.matrix[,1], deviance.vec)
-#plot(b.AGLM.matrix[,2], deviance.vec)
+plot(b.AGLM.matrix[,1], deviance.vec)
+abline(v=b.opt[1], col = 1)
+abline(v=b.MLE[1], col = 2)
+abline(v=b.PA[1], col = 3)
 
-#plot(b.AGLM.matrix[,1], deviance.vec, type="l")
-#lines(b.AGLM.matrix[,2], deviance.vec)
+plot(b.AGLM.matrix[,2], deviance.vec)
+abline(v=b.opt[2], col = 1)
+abline(v=b.MLE[2], col = 2)
+abline(v=b.PA[2], col = 3)

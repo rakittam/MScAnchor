@@ -12,9 +12,7 @@ n <- 1000 # number of samples from unpertubed and pertubed distribution
 library(extraDistr) # for rademacher distribution
 
 # Anchor coefficients
-g1 <- rnorm(n=1)
-g2 <- rnorm(n=1)
-g3 <- -2
+g1 <- 0.5
 
 # initialize training data
 A.train <- matrix(nrow = n, ncol = 1)
@@ -120,10 +118,10 @@ AGLM(xi)
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
-g1.test <- 0 # 0, i.e. chooses MLE, 
-g1.test <- 0.2 # close to xi=1 => gamma = 2
-g1.test <- -0.2 # 0.1
-g1.test <- -0.9 # 4.9
+g1.test <- 0
+g1.test <- -0.5
+g1.test <- 1
+g1.test <- 2
 
 # Initialize test data
 A.test <- matrix(nrow = n, ncol = 1)
@@ -165,8 +163,30 @@ for (i in 1:length(xi.vec)) {
   deviance.vec[i] <- 1/n*t(r.D.test)%*%r.D.test
 }
 
+# Smallest deviance xi
+xi.opt <- xi.vec[which.min(deviance.vec)]
+xi.opt
+b.opt <- AGLM(xi.opt)
+
+# MLE
+xi <- 0
+b.MLE <- AGLM(xi)
+
+# PA
+xi <- -1
+b.PA <- AGLM(xi)
+
+# IV
+xi <- 100
+b.IV <- AGLM(xi)
+
 # Plot like in ex2 of Rothenhaeusler
 plot(xi.vec, deviance.vec, type = "l")
-xi.vec[which.min(deviance.vec)]
+abline(v=xi.opt, col = 1)
+abline(v=0, col = 2)
+abline(v=-1, col = 3)
 
-plot(b.AGLM.matrix, deviance.vec)
+plot(b.AGLM.matrix[,1], deviance.vec)
+abline(v=b.opt[1], col = 1)
+abline(v=b.MLE[1], col = 2)
+abline(v=b.PA[1], col = 3)
