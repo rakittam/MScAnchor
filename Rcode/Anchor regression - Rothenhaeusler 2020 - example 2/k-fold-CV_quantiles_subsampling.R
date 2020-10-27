@@ -116,7 +116,7 @@ for (g in 1:length(gamma.optimal.vec)) {
 
 ##########################################################################
 # Test CV output on data with different pertubations
-v.vec <- seq(-5,5, by=0.1)
+v.vec <- seq(-10,10, length.out = 100)
 nit <- 100
 
 # Initialize result arrays
@@ -167,9 +167,3 @@ legend(-1, 120, legend=c("optimal gamma", "OLS", "PA", "IV"),
 # Playground for different alphas
 index.temp <- which(alpha.vec==0.8)
 lines(v.vec, quantile.test.CV.averaged.iterations[index.temp, ], col = 5)
-
-alpha.vec[96]
-alpha.vec[96]==0.95
-
-alpha.vec[91]
-alpha.vec[91]==0.9

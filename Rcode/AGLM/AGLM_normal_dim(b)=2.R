@@ -126,18 +126,8 @@ AGLM <- function(xi){
   #ans1
   
   # For multidimensional unconstrained optimization
-  ans2 <- optim(par=c(1,1), fn=objective, hessian = TRUE)
-  b.AGLM <- ans2$par
-  b.AGLM
-  hess.mat <- ans2$hessian
-  
-  # Is b.AGLM local minimum?
-  det(hess.mat)>0 & hess.mat[1,1]>0
-  
-  # For constrained optimization
-  #ans3 <- auglag(par=c(1,1), fn=objective)
-  #ans3
-  return(b.AGLM)
+  ans2 <- optim(f=objective, par = runif(2), method = "L-BFGS-B")
+  return(ans2$par)
 }
 
 b.AGLM <- AGLM(1)

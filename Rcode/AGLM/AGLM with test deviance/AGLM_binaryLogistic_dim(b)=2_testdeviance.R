@@ -4,7 +4,7 @@
 # Author: Maic Rakitta
 # Date: 07.10.20
 ##########################################################################
-set.seed(2)
+set.seed(1)
 
 n <- 1000 # number of samples from unpertubed and pertubed distribution
 
@@ -111,9 +111,10 @@ AGLM <- function(xi){
   }
   
   # Set start value for optimization
-  start.val <- c(1,1)
-  ans2 <- optim(par=start.val, fn=objective, hessian = TRUE)
+  ans2 <- optim(f=objective, par = runif(2), method = "L-BFGS-B")
   return(ans2$par)
+  
+  #ans2 <- optim(f=objective, par = runif(ncol(X)), method = "L-BFGS-B")
 }
 
 ##########################################################################

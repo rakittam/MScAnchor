@@ -42,7 +42,7 @@ A <- A.train
 P.A <- A%*%solve(t(A)%*%A)%*%t(A)
 
 ##########################################################################
-# AGLM using alabama, optim, optimize
+# AGLM using optim
 
 AGLM <- function(xi){
   
@@ -59,7 +59,7 @@ AGLM <- function(xi){
     b.hat <- hat.vec[1:2]
     s2 <- hat.vec[3]
     p.hat <- X%*%b.hat # inverse of identity link
-    r.D <- 1/sqrt(s2)*(Y-p.hat)  # deviance residuals
+    r.D <- sign(Y-p.hat)*1/sqrt(s2)*(Y-p.hat)  # deviance residuals
     return(t(r.D)%*%P.A%*%r.D)
   }
   
@@ -76,14 +76,9 @@ AGLM <- function(xi){
   ans2 <- optim(par=c(1,1,1), fn=objective, hessian = TRUE)
   b.AGLM <- ans2$par
   return(b.AGLM)
-  hess.mat <- ans2$hessian
   
-  # Is b.AGLM local minimum?
-  det(hess.mat)>0 & hess.mat[1,1]>0
-   
-  # For constrained optimization
-  #ans3 <- auglag(par=c(1,1), fn=objective)
-  #ans3
+  #ans2 <- optim(f=objective, par = runif(3), method = "L-BFGS-B")
+  #return(ans2$par)
 }
 
 xi=1

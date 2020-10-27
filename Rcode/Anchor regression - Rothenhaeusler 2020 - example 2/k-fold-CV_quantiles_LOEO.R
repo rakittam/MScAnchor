@@ -116,7 +116,7 @@ for (g in 1:length(gamma.optimal.vec)) {
 
 ##########################################################################
 # Test CV output on data with different pertubations
-v.vec <- seq(-5,5, by=0.1)
+v.vec <- seq(-10,10, length.out = 100)
 nit <- 100
 
 # Initialize result arrays

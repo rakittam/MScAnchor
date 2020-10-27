@@ -109,9 +109,14 @@ AGLM <- function(xi){
   }
   
   # Set start value for optimization
-  start.val <- c(1)
-  ans2 <- optimize(interval = c(-10,10), f= objective)
-  return(ans2$minimum)
+  #ans2 <- optimize(interval = c(-10,10), f= objective)
+  
+  ans2 <- optim(f=objective, par = runif(1), method = "L-BFGS-B")
+  
+  #optim(f=function(x) x^2, par = runif(dim(beta)), method = "L-BFGS-B")
+  
+  
+  return(ans2$par)
 }
 
 ##########################################################################
@@ -123,9 +128,9 @@ AGLM(xi)
 ##########################################################################
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
-g1.test <- 0
+#g1.test <- 0
 #g1.test <- -0.5
-#g1.test <- 1
+g1.test <- 1
 #g1.test <- 2
 
 # Initialize test data
@@ -152,27 +157,18 @@ A.test <- A.test
 # Iterating over xi
 xi.vec <- seq(-1,10,by=0.1)
 b.AGLM.matrix <- matrix(nrow=length(xi.vec), ncol = 1)
-deviance.vec <- numeric(length(xi.vec))
-
+test.likelihood <- numeric(length(xi.vec))
 for (i in 1:length(xi.vec)) {
   xi <- xi.vec[i]
   b.AGLM.matrix[i] <- AGLM(xi)
+  #test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-m*log(1+exp(X.test*b.AGLM.matrix[i])))
   
-  p.hat.test <- exp(X.test*b.AGLM.matrix[i])/(1+exp(X.test*b.AGLM.matrix[i])) # inverse of logit link
-  
-  special.case1 <- function(Y.test){
-    ifelse(Y.test==0, 0, Y.test*log(Y.test/(m*p.hat.test)))
-  }
-  special.case2 <- function(Y.test){
-    ifelse(Y.test==m, 0, (m-Y.test)*log((m-Y.test)/(m-m*p.hat.test)))
-  }
-  
-  r.D.test <- sign(Y.test/m-p.hat.test)*sqrt(2*(special.case1(Y.test)+special.case2(Y.test))) # deviance residuals
-  deviance.vec[i] <- 1/n*t(r.D.test)%*%r.D.test
+  p.hat <- exp(X.test*b.AGLM.matrix[i])/(1+exp(X.test*b.AGLM.matrix[i]))
+  test.likelihood[i] <- prod(choose(m,Y.test)*p.hat^Y.test*(1-p.hat)^(m-Y.test))
 }
 
 # Smallest deviance xi
-xi.opt <- xi.vec[which.min(deviance.vec)]
+xi.opt <- xi.vec[which.max(test.likelihood)]
 xi.opt
 b.opt <- AGLM(xi.opt)
 
@@ -189,12 +185,12 @@ xi <- 100
 b.IV <- AGLM(xi)
 
 # Plot like in ex2 of Rothenhaeusler
-plot(xi.vec, deviance.vec, type = "l")
+plot(xi.vec, test.likelihood, type = "l")
 abline(v=xi.opt, col = 1)
 abline(v=0, col = 2)
 abline(v=-1, col = 3)
 
-plot(b.AGLM.matrix[,1], deviance.vec)
+plot(b.AGLM.matrix[,1], test.likelihood)
 abline(v=b.opt, col = 1)
 abline(v=b.MLE, col = 2)
 abline(v=b.PA, col = 3)
