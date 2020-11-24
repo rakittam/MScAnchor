@@ -142,7 +142,7 @@ for (i in 1:n) {
   H.test[i] <- epsH.test
   epsX.test <- rnorm(n=10, mean=0, sd=1)
   X.test[i,] <- g1.test*A.test[i,1]+g2.test*A.test[i,2]+H.test[i]+epsX.test
-  Y.test[i] <- rbinom(n=1, size=m, plogis(3*X.test[i,2]+3*X.test[i,3]+H.test[i]+g3.test*A.train[i,1]))
+  Y.test[i] <- rbinom(n=1, size=m, plogis(3*X.test[i,2]+3*X.test[i,3]+H.test[i]+g3.test*A.test[i,1]))
 }
 
 # Objective data
@@ -159,10 +159,10 @@ test.likelihood <- numeric(length(xi.vec))
 for (i in 1:length(xi.vec)) {
   xi <- xi.vec[i]
   b.AGLM.matrix[i,] <- AGLM(xi)
-  #test.likelihood[i] <- 1/n*sum(Y.test*(X.test%*%b.AGLM.matrix[i,])-m*log(1+exp(X.test%*%b.AGLM.matrix[i,])))
+  test.likelihood[i] <- 1/n*sum(Y.test*(X.test%*%b.AGLM.matrix[i,])-m*log(1+exp(X.test%*%b.AGLM.matrix[i,])))
   
-  p.hat <- exp(X.test%*%b.AGLM.matrix[i,])/(1+exp(X.test%*%b.AGLM.matrix[i,]))
-  test.likelihood[i] <- prod(choose(m,Y.test)*p.hat^Y.test*(1-p.hat)^(m-Y.test))
+  #p.hat <- exp(X.test%*%b.AGLM.matrix[i,])/(1+exp(X.test%*%b.AGLM.matrix[i,]))
+  #test.likelihood[i] <- prod(choose(m,Y.test)*p.hat^Y.test*(1-p.hat)^(m-Y.test))
 }
 
 # Smallest deviance xi

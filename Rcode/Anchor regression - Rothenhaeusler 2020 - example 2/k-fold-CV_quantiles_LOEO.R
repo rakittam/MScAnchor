@@ -119,6 +119,8 @@ for (g in 1:length(gamma.optimal.vec)) {
 v.vec <- seq(-10,10, length.out = 100)
 nit <- 100
 
+n <- 10000
+
 # Initialize result arrays
 quantile.test.CV.array <- array(dim=c(length(alpha.vec), length(v.vec), nit))
 quantile.test.noCV.array <- array(dim=c(3, length(v.vec), nit))

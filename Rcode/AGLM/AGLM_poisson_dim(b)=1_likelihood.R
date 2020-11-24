@@ -118,8 +118,8 @@ AGLM(xi)
 # Iterating over different hyper parameters for Rothenhaeusler e2 plot
 
 #g1.test <- 0
-#g1.test <- -0.5
-g1.test <- 1
+g1.test <- -0.5
+#g1.test <- 1
 #g1.test <- 2
 
 # Initialize test data
@@ -153,6 +153,8 @@ for (i in 1:length(xi.vec)) {
   b.AGLM.matrix[i] <- AGLM(xi)
   test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-exp(X.test*b.AGLM.matrix[i]))
   #test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-exp(X.test*b.AGLM.matrix[i])-log(factorial(Y.test)))
+  
+  #test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-exp(X.test*b.AGLM.matrix[i])-log(stirling(x)))
   
   #lambda <- exp(X.test*b.AGLM.matrix[i])
   #test.likelihood[i] <- prod(lambda^Y.test*exp(-lambda)/factorial(Y.test))

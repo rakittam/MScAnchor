@@ -161,10 +161,10 @@ test.likelihood <- numeric(length(xi.vec))
 for (i in 1:length(xi.vec)) {
   xi <- xi.vec[i]
   b.AGLM.matrix[i] <- AGLM(xi)
-  #test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-m*log(1+exp(X.test*b.AGLM.matrix[i])))
+  test.likelihood[i] <- 1/n*sum(Y.test*(X.test*b.AGLM.matrix[i])-m*log(1+exp(X.test*b.AGLM.matrix[i])))
   
-  p.hat <- exp(X.test*b.AGLM.matrix[i])/(1+exp(X.test*b.AGLM.matrix[i]))
-  test.likelihood[i] <- prod(choose(m,Y.test)*p.hat^Y.test*(1-p.hat)^(m-Y.test))
+  #p.hat <- exp(X.test*b.AGLM.matrix[i])/(1+exp(X.test*b.AGLM.matrix[i]))
+  #test.likelihood[i] <- prod(choose(m,Y.test)*p.hat^Y.test*(1-p.hat)^(m-Y.test))
 }
 
 # Smallest deviance xi
