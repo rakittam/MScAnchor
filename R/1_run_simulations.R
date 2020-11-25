@@ -4,89 +4,131 @@
 ###############################################################################
 
 library(glare)
+library(simstudy)
 
-# One repetition --------------------------------------------------------------
-#  ´rep´ indicates the index number of a repetition, ´nobs´ is the number of
-#  observation for each setup
-onerep <- function(rep, nobs = 300,
-                   xi....) {
+# Defining variables of data sets for one repetition --------------------------
+
+# Data 1
+def_1 <- defData(varname = "H", dist = "normal",
+                 formula = 0, variance = 1)
+def_1 <- defData(def_1, varname = "A", dist = "normal", 
+                 formula = 0, variance = 1)
+def_1 <- defData(def_1, varname = "X", dist = "normal", 
+                 formula = "H + 1.5 * A", variance = 1)
+def_1 <- defData(def_1, varname = "Y", dist = "normal", 
+                 formula = "X + 2 * H - 3 * A", variance = 1)
+
+# Perturbed data 1
+def_pert_1 <- defData(varname = "H", dist = "normal",
+                      formula = 0, variance = 1)
+def_pert_1 <- defData(def_pert_1, varname = "A", dist = "normal", 
+                      formula = 0, variance = 1)
+def_pert_1 <- defData(def_pert_1, varname = "X", dist = "normal", 
+                      formula = "H - 1.5 * A", variance = 1)
+def_pert_1 <- defData(def_pert_1, varname = "Y", dist = "normal", 
+                      formula = "X + 2 * H - 1 * A", variance = 1)
+
+rep <- 1
+nobs <- 300
+data_table <- def_1
+data_pert_table <- def_pert_1
+formula <- Y~X-1
+A_formula <- ~A-1
+nest <- 1
+xi_values = seq(-1, 2, by = 0.1)
+family <- gaussian
+type <- "deviance"
+
+
+
+# Define function for one repetition ------------------------------------------
+# rep is an index of a simulation run
+onerep <- function(rep, nobs = 300, data_table, data_pert_table, 
+                   formula, A_formula, nest,
+                   xi_values = seq(-1, 2, by = 0.1),
+                   family, type) {
   
-} 
-
-
-
-
-# Function to generate one-repetition worth of data
-# Generate survival times s from a Weibull dist. with single binary covariate trt
-# and administrative censoring at time s = 5
-# Then analyse using exponential, Weibull and Cox
-onerep <- function(rep, nobs = 300, prob = 0.5, lambda = 0.1, gamma = 1, beta = -0.5) {
-  df <- data.frame(
-    id = 1:nobs,
-    trt = rbinom(n = nobs, size = 1, prob = prob)
-  )
-  # Generate survival times and merge into df
-  s <- simsurv(lambdas = lambda, gammas = gamma, betas = c(trt = beta), x = df, maxt = 5)
-  df <- merge(df, s)
-  # Exponential model
-  fitexp <- phreg(Surv(eventtime, status) ~ trt, data = df, dist = "weibull", shape = 1)
-  thetaexp <- coef(fitexp)[["trt"]]
-  se_thetaexp <- sqrt(fitexp[["var"]]["trt", "trt"])
-  # Weibull model
-  fitwei <- phreg(Surv(eventtime, status) ~ trt, data = df, dist = "weibull")
-  thetawei <- coef(fitwei)[["trt"]]
-  se_thetawei <- sqrt(fitwei[["var"]]["trt", "trt"])
-  # Cox model
-  fitcox <- coxph(Surv(eventtime, status) ~ trt, df)
-  thetacox <- coef(fitcox)[["trt"]]
-  se_thetacox <- sqrt(fitcox[["var"]])
-  # Output coeffs and SEs
-  out <- data.frame(
-    rep = rep,
-    dgmgamma = gamma,
-    theta_1 = thetaexp,
-    se_1 = se_thetaexp,
-    theta_2 = thetawei,
-    se_2 = se_thetawei,
-    theta_3 = thetacox,
-    se_3 = se_thetacox
-  )
-  return(out)
+  # Generate data set with nobs observations
+  dd <- genData(nobs, data_table)
+  dd_pert <- genData(nobs, data_pert_table)
+  
+  # Fit
+  b_matrix <- matrix(nrow = length(xi_values), ncol = nest)
+  b_se_matrix <- matrix(nrow = length(xi_values), ncol = nest)
+  loglikelihood_pert <- numeric(length(xi_values))
+  
+  for (i in 1:length(xi_values)) {
+    
+    xi <- xi_values[i]
+    fit_temp <- glare(formula = formula,
+                      A_formula = A_formula,
+                      data = dd,
+                      xi = xi,
+                      family = family,
+                      type = type)
+    
+    b_matrix[i, ] <- as.numeric(coef(fit_temp))
+    b_se_matrix[i, ] <- fit_temp$coef_se
+    loglikelihood_pert[i] <- logLik(fit_temp, newdata = dd_pert)
+  }
+  
+  # Return
+  data.frame(rep = rep,
+             xi_values = xi_values,
+             b = b_matrix,
+             b_se = b_se_matrix,
+             loglikelihood_pert = loglikelihood_pert)
 }
 
-# Uncomment the following line to run once with large n_obs.
-#onerep(i = 1, nobs = 100000)
+# Make nsim simulation runs --------------------------------------------------
+set.seed(3516)
+nsim <- 10
 
-# Preparation to run nsim repetitions
-set.seed(65416)
-nsim <- 1600
-# Empty estimates data frame to fill up.
-# Note - requires nsim*2 rows because 2 data-generating mechanisms
-estimates <- data.frame(matrix(ncol = 8, nrow = (nsim*2)))
-x <- c("rep", "dgmgamma", "theta_1", "se_1", "theta_2", "se_2", "theta_3", "se_3")
-colnames(estimates) <- x
-states <- matrix(ncol = 626, nrow = (nsim*2))
+nxi <- length(xi_values)
+
+sim_data_1 <- data.frame(matrix(ncol = 5, nrow = nsim * nxi))
+colnames(sim_data_1) <- c("rep", "xi", "b", "se", "loglikelihood_pert")
+states_1 <- matrix(ncol = 626, nrow = nsim * nxi)
 
 # Run all nsim reps
 for (r in 1:nsim) {
-  # 1st data-generating mechanism
-  states[r, ] <- .Random.seed
-  estimates[r, ] <- onerep(rep = r, gamma=1)
-  # 2nd data-generating mechanism
-  states[(nsim+r), ] <- .Random.seed
-  estimates[(nsim+r), ] <- onerep(rep = r, gamma=1.5)
+  states_1[r, ] <- .Random.seed
+  sim_data_1[(nxi * (r - 1) + 1):(nxi * r), ] <-
+    onerep(rep = r, nobs = 300, data_table, data_pert_table, 
+           formula, A_formula, nest,
+           xi_values = seq(-1, 2, by = 0.1),
+           family, type)
 }
 
-# Save data frame for analysis
-head(estimates)
-saveRDS(estimates, file = "estimates.rds")
-head(states)
-saveRDS(states, file = "states.rds")
+head(sim_data_1)
 
-# Want to reproduce data from a particular rep? This is why we produced (and saved) states
-# Here is repetition 3, gamma = 1
-.Random.seed <- states[3,]
-onerep(rep = 3, gamma=1)
-# Now for repetition 211, gamma = 1.5
-.Random.seed <- states[(nsim+211),] # For the second data-generating mechanism, we stored state r in row nsim+r
-onerep(rep = 211, gamma=1.5)
+
+
+
+
+
+
+
+# Data 2
+def_2 <- defData(varname = "H", dist = "normal",
+                formula = 0, variance = 1)
+def_2 <- defData(def_2, varname = "A", dist = "normal", 
+                formula = 0, variance = 1)
+def_2 <- defData(def_2, varname = "X", dist = "normal", 
+                formula = "H + 0.5 * A", variance = 1)
+def_2 <- defData(def_2, varname = "m",
+                formula = 5)
+def_2 <- defData(def_2, varname = "Y", dist = "binomial", link = "logit", 
+                formula = "3 * X + H - 2 * A", variance = 5)
+
+formula <- Y~X-1
+A_formula <- ~A-1
+xi <- 2
+family <- binomial
+type <- "deviance"
+data_table <- def_2
+nobs <- 300
+
+
+#path_name <- "C:/Users/maicr/Desktop/Github/glare/data sets/simulation 1/data1"
+#write.table(dd1, file=paste(path_name,Sys.Date(),sep = "_"))
