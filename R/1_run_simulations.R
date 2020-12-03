@@ -91,6 +91,7 @@ simulate_rot <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
                           "b_ar", "se_ar", "b_glare", "se_glare",
                           "MSE_pert_ar", "MSE_pert_glare")
   
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
   for (r in 1:nsim) {
     
     states[r, ] <- .Random.seed
@@ -100,7 +101,11 @@ simulate_rot <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
                  formula = formula, A_formula = A_formula,
                  xi_values = xi_values, xi_big = xi_big,
                  family = family, type = type)
+    
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb, r)
   }
+  close(pb)
   
   list(states = states, sim_data = sim_data)
 }
@@ -121,7 +126,7 @@ onerep_fivi <- function(rep, nobs = 300, data_table, data_pert_table,
   b_glare_se <- matrix(nrow = xi_len, ncol = 1)
   
   logLik_glare_pert <- numeric(xi_len)
-  
+
   for (i in 1:xi_len) {
     
     xi <- xi_values[i]
@@ -139,7 +144,6 @@ onerep_fivi <- function(rep, nobs = 300, data_table, data_pert_table,
     logLik_glare_pert_indiv <- logLik(fit_temp, newdata = dd_pert, indiv = TRUE)
     logLik_glare_pert[i] <-
       as.numeric(quantile(logLik_glare_pert_indiv, quant_value))
-    
   }
   
   # Fit GLM
@@ -195,8 +199,8 @@ simulate_fivi <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
   colnames(sim_data) <- c("rep", "xi",
                           "b", "se", "logLik_pert")
   
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
   for (r in 1:nsim) {
-    
     states[r, ] <- .Random.seed
     sim_data[((xi_len + 2) * (r - 1) + + 1):((xi_len + 2) * r), ] <- 
       onerep_fivi(rep = r,
@@ -205,7 +209,11 @@ simulate_fivi <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
                   xi_values = xi_values, xi_big = xi_big,
                   family = family, type = type,
                   quant_value = quant_value)
+    
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb, r)
   }
+  close(pb)
   
   list(states = states, sim_data = sim_data)
 }
@@ -291,9 +299,11 @@ simulate_fixi <- function(nsim, nobs = 300, xi, xi_big = 10000, v_values,
                           "b_glm", "se_glm", "logLik_glm_pert",
                           "b_glare", "se_glare", "logLik_glare_pert",
                           "b_big", "se_big", "logLik_big_pert")
-  
+ 
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
   for (r in 1:nsim) {
     for (s in 1:v_len) {
+      
       states[r, s, ] <- .Random.seed
       
       data_pert_table_temp <- updateDef(data_pert_table,
@@ -308,7 +318,10 @@ simulate_fixi <- function(nsim, nobs = 300, xi, xi_big = 10000, v_values,
                     xi = xi, xi_big = xi_big, family = family, type = type,
                     quant_value = quant_value)
     }
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb, r)
   }
+  close(pb)
   
   list(states = states, sim_data = sim_data)
 }
