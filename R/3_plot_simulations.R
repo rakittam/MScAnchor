@@ -26,15 +26,25 @@ plot_rot <- function(sim_data, xi_big = 10000) {
   MSE_IV_ar <- mean_data$mean_MSE_pert_ar[mean_data$xi == xi_big]
   MSE_PA_ar <- mean_data$mean_MSE_pert_ar[mean_data$gamma == 0]
   
-  gg_ar <- ggplot(mean_data, aes(y = mean_MSE_pert_ar)) +
+  
+  gg_data <- data.frame(x = c(mean_data$mean_b_ar, mean_data$mean_b_glare),
+                        y = c(mean_data$mean_MSE_pert_ar, mean_data$mean_MSE_pert_glare),
+                        group = c(rep("AR", length(mean_data$mean_b_ar)),
+                                      rep("GLARE", length(mean_data$mean_b_ar))))
+  
+  
+  
+  gg <- ggplot(gg_data, aes(y = y, x = x, color = group, group = group)) +
     
-    geom_line(aes(x = mean_b_ar)) +
+    geom_line() +
     
-    annotate("point", colour = 2, x = b_OLS_ar, y = MSE_OLS_ar) +
+    ylab("MSE of perturbed data") +
+    
+    annotate("point", colour = 1, x = b_OLS_ar, y = MSE_OLS_ar) +
     annotate("text", label = "OLS", x = b_OLS_ar - 0.02, y = MSE_OLS_ar + 0.1) +
-    annotate("point", colour = 3, x = b_IV_ar, y = MSE_IV_ar) +
+    annotate("point", colour = 1, x = b_IV_ar, y = MSE_IV_ar) +
     annotate("text", label = "IV", x = b_IV_ar + 0.02, y = MSE_IV_ar + 0.1) +
-    annotate("point", colour = 4, x = b_PA_ar, y = MSE_PA_ar) +
+    annotate("point", colour = 1, x = b_PA_ar, y = MSE_PA_ar) +
     annotate("text", label = "PA", x = b_PA_ar - 0.02, y = MSE_PA_ar + 0.1) +
     
     scale_x_continuous(
@@ -46,49 +56,78 @@ plot_rot <- function(sim_data, xi_big = 10000) {
       
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
-                          name="gamma",
-                          breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
-                          labels=c("inf",17.7,7.9, 4.5, 2.9, 1.8, 1.1, 0.7, 0.3, 0.0))
+                          name="gamma (xi)",
+                          breaks=c(1.111111, 1.555556, 2.000000),
+                          labels=c("17.7 (8.3)", "1.8 (0.4)", "0 (-0.5)"))
       
-    )
+    ) 
   
-  # Plot ex2 analogon for glare
-  b_OLS_glare <- mean_data$mean_b_glare[mean_data$gamma == 1]
-  b_IV_glare <- mean_data$mean_b_glare[mean_data$xi == 10000]
-  b_PA_glare <- mean_data$mean_b_glare[mean_data$gamma == 0]
+  # 
+  # gg_ar <- ggplot(mean_data, aes(y = mean_MSE_pert_ar)) +
+  #   
+  #   geom_line(aes(x = mean_b_ar)) +
+  #   
+  #   annotate("point", colour = 2, x = b_OLS_ar, y = MSE_OLS_ar) +
+  #   annotate("text", label = "OLS", x = b_OLS_ar - 0.02, y = MSE_OLS_ar + 0.1) +
+  #   annotate("point", colour = 3, x = b_IV_ar, y = MSE_IV_ar) +
+  #   annotate("text", label = "IV", x = b_IV_ar + 0.02, y = MSE_IV_ar + 0.1) +
+  #   annotate("point", colour = 4, x = b_PA_ar, y = MSE_PA_ar) +
+  #   annotate("text", label = "PA", x = b_PA_ar - 0.02, y = MSE_PA_ar + 0.1) +
+  #   
+  #   scale_x_continuous(
+  #     
+  #     limits = c(0.99,2.01),
+  #     
+  #     # Features of the first axis
+  #     name = "b",
+  #     
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name="gamma",
+  #                         breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
+  #                         labels=c("inf",17.7,7.9, 4.5, 2.9, 1.8, 1.1, 0.7, 0.3, 0.0))
+  #     
+  #   )
+  # 
+  # # Plot ex2 analogon for glare
+  # b_OLS_glare <- mean_data$mean_b_glare[mean_data$gamma == 1]
+  # b_IV_glare <- mean_data$mean_b_glare[mean_data$xi == 10000]
+  # b_PA_glare <- mean_data$mean_b_glare[mean_data$gamma == 0]
+  # 
+  # MSE_OLS_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 1]
+  # MSE_IV_glare <- mean_data$mean_MSE_pert_glare[mean_data$xi == 10000]
+  # MSE_PA_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 0]
+  # 
+  # gg_glare <- ggplot(mean_data, aes(y = mean_MSE_pert_glare)) +
+  #   
+  #   geom_line(aes(x = mean_b_glare)) +
+  #   
+  #   annotate("point", colour = 2, x = b_OLS_glare, y = MSE_OLS_glare) +
+  #   annotate("text", label = "OLS", x = b_OLS_glare - 0.02, y = MSE_OLS_glare + 0.1) +
+  #   annotate("point", colour = 3, x = b_IV_glare, y = MSE_IV_glare) +
+  #   annotate("text", label = "IV", x = b_IV_glare + 0.02, y = MSE_IV_glare + 0.1) +
+  #   annotate("point", colour = 4, x = b_PA_glare, y = MSE_PA_glare) +
+  #   annotate("text", label = "PA", x = b_PA_glare - 0.02, y = MSE_PA_glare + 0.1) +
+  #   
+  #   scale_x_continuous(
+  #     
+  #     limits = c(0.99,2.01),
+  #     
+  #     # Features of the first axis
+  #     name = "b",
+  #     
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name="xi",
+  #                         breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
+  #                         labels=c("inf", 8.3, 3.4, 1.8, 0.9, 0.4, 0.1, -0.2, -0.4, -0.5))
+  #     
+  #   )
+  # 
+  # print(gg_ar)
+  # print(gg_glare)
   
-  MSE_OLS_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 1]
-  MSE_IV_glare <- mean_data$mean_MSE_pert_glare[mean_data$xi == 10000]
-  MSE_PA_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 0]
-  
-  gg_glare <- ggplot(mean_data, aes(y = mean_MSE_pert_glare)) +
-    
-    geom_line(aes(x = mean_b_glare)) +
-    
-    annotate("point", colour = 2, x = b_OLS_glare, y = MSE_OLS_glare) +
-    annotate("text", label = "OLS", x = b_OLS_glare - 0.02, y = MSE_OLS_glare + 0.1) +
-    annotate("point", colour = 3, x = b_IV_glare, y = MSE_IV_glare) +
-    annotate("text", label = "IV", x = b_IV_glare + 0.02, y = MSE_IV_glare + 0.1) +
-    annotate("point", colour = 4, x = b_PA_glare, y = MSE_PA_glare) +
-    annotate("text", label = "PA", x = b_PA_glare - 0.02, y = MSE_PA_glare + 0.1) +
-    
-    scale_x_continuous(
-      
-      limits = c(0.99,2.01),
-      
-      # Features of the first axis
-      name = "b",
-      
-      # Add a second axis and specify its features
-      sec.axis = sec_axis(trans= ~.,
-                          name="xi",
-                          breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
-                          labels=c("inf", 8.3, 3.4, 1.8, 0.9, 0.4, 0.1, -0.2, -0.4, -0.5))
-      
-    )
-  
-  print(gg_ar)
-  print(gg_glare)
+  print(gg)
   invisible(mean_data)
 }
 
