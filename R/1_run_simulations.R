@@ -231,6 +231,18 @@ onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table,
   dd_pert <- genData(nobs, data_pert_table)
   
   # Fit GLM
+  # fit_glm <- glm(formula = formula,
+  #                data = dd,
+  #                family = family)
+  # b_glm <- as.numeric(coef(fit_glm))
+  # b_glm_se <- 1
+  # 
+  # mu <- dd_pert$X * b_glm
+  # n <- length(dd_pert$Y)
+  # s <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
+  # logLik_glm_pert_indiv <- dnorm(dd_pert$Y, mean = mu, sd = s, log = TRUE)
+  # logLik_glm_pert <- as.numeric(quantile(logLik_glm_pert_indiv, quant_value))
+  
   fit_glm <- glare(formula = formula,
                    A_formula = A_formula,
                    data = dd,
@@ -240,7 +252,7 @@ onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table,
   
   b_glm <- as.numeric(coef(fit_glm))
   b_glm_se <- fit_glm$coef_se
-  
+
   logLik_glm_pert_indiv <- logLik(fit_glm, newdata = dd_pert, indiv = TRUE)
   logLik_glm_pert <- as.numeric(quantile(logLik_glm_pert_indiv, quant_value))
   
@@ -379,7 +391,7 @@ summary(data_rot)
 
 plot_rot(data_rot)
 
-# Anchor on X (IV setting) ----------------------------------------------------
+# Anchor on X normal (IV setting) ---------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
 # def_nor_X <- defData(varname = "randA", dist = "binary",
@@ -387,28 +399,28 @@ plot_rot(data_rot)
 # def_nor_X <- defData(def_nor_X, varname = "A", 
 #                      formula = "2 * randA - 1")
 def_nor_X <- defData(varname = "A", dist = "normal",
-                     formula = 0, variance = 0.01)
+                     formula = 1, variance = 0.1)
 def_nor_X <- defData(def_nor_X, varname = "H", dist = "normal",
-                     formula = 0, variance = 0.01)
+                     formula = 0, variance = 0.1)
 def_nor_X <- defData(def_nor_X, varname = "X", dist = "normal", 
-                     formula = "0.8 * H + A", variance = 0.01)
+                     formula = "0.8 * H + A", variance = 0.1)
 def_nor_X <- defData(def_nor_X, varname = "Y", dist = "normal", 
-                     formula = "0.3 * X - 0.7 * H", variance = 0.25)
+                     formula = "0.7 * X + 0.9 * H", variance = 0.1)
 
 # def_nor_X_pert <- defData(varname = "randA", dist = "binary",
 #                           formula = 0.5)
 # def_nor_X_pert <- defData(def_nor_X_pert, varname = "A", 
 #                           formula = "2 * randA - 1")
 def_nor_X_pert <- defData(varname = "A", dist = "normal",
-                          formula = 0, variance = 0.01)
+                          formula = 1, variance = 0.1)
 def_nor_X_pert <- defData(def_nor_X_pert, varname = "v", 
-                          formula = 3) # set perturbation strength
+                          formula = 5) # set perturbation strength
 def_nor_X_pert <- defData(def_nor_X_pert, varname = "H", dist = "normal",
-                          formula = 0, variance = 0.01)
+                          formula = 0, variance = 0.1)
 def_nor_X_pert <- defData(def_nor_X_pert, varname = "X", dist = "normal", 
-                          formula = "0.8 * H + v * A", variance = 0.01)
+                          formula = "0.8 * H + v * A", variance = 0.1)
 def_nor_X_pert <- defData(def_nor_X_pert, varname = "Y", dist = "normal",
-                          formula = "0.3 * X - 0.7 * H", variance = 0.25)
+                          formula = "0.7 * X + 0.9 * H", variance = 0.1)
 
 dd <- genData(300, def_nor_X)
 dd_pert <- genData(300, def_nor_X_pert)
@@ -455,9 +467,15 @@ plot_fivi(data_nor_X_fivi, xi_big = xi_big)
 set.seed(3316)
 nsim <- 5
 
-xi <- 2
+xi <- 1
 xi_big <- 10000
-v_values <- seq(0, 100, by = 1)
+v_values <- seq(0, 10, by = 1)
+
+# nsim <- 100
+# 
+# xi <- 1
+# xi_big <- 10000
+# v_values <- seq(0, 4, by = 0.5)
 
 data_table <- def_nor_X
 data_pert_table <- def_nor_X_pert
@@ -487,6 +505,66 @@ plot_fixi(data_nor_X_fixi)
 
 
 
+# Anchor on X, H and Y normal -------------------------------------------------
+
+# Define variables for unperturbed and perturbed data set
+def_nor_XHY <- defData(varname = "A", dist = "normal", variance = 0.25,
+                       formula = 2)
+def_nor_XHY <- defData(def_nor_XHY, varname = "H", dist = "normal",
+                       variance = 0.25,
+                       formula = "-1 + A",)
+def_nor_XHY <- defData(def_nor_XHY, varname = "X", dist = "normal",
+                       variance = 0.25,
+                       formula = "H + 1 * A")
+def_nor_XHY <- defData(def_nor_XHY, varname = "Y", dist = "normal", 
+                       formula = "2 * X - H - A", variance = 1)
+
+def_nor_XHY_pert <- defData(varname = "A", dist = "normal", 
+                            variance = 0.25, formula = 2)
+def_nor_XHY_pert <- defData(def_nor_XHY_pert, varname = "H", dist = "normal",
+                            variance = 0.25,
+                            formula = "-1 + 2 * A") # set perturbation
+def_nor_XHY_pert <- defData(def_nor_XHY_pert, varname = "X", dist = "normal", 
+                            variance = 0.25,
+                            formula = "H - 1 * A") # set perturbation 
+def_nor_XHY_pert <- defData(def_nor_XHY_pert, varname = "Y", dist = "normal",
+                            formula = "2 * X - H - 3 * A", variance = 1) # set perturbation 
+
+dd <- genData(300, def_nor_XHY)
+dd_pert <- genData(300, def_nor_XHY_pert)
+hist(dd$Y)
+
+# Initialize
+set.seed(3516)
+nsim <- 5
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- xi_values[-1]
+xi_big <- 10000
+
+data_table <- def_nor_XHY
+data_pert_table <- def_nor_XHY_pert
+formula <- Y ~ X - 1
+A_formula <- ~ A - 1
+family <- gaussian
+type <- "pearson"
+
+# Simulate
+sim_data_nor_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
+                                       xi_values = xi_values, xi_big = xi_big,
+                                       data_table = data_table,
+                                       data_pert_table = data_pert_table, 
+                                       formula = formula, A_formula = A_formula,
+                                       family = family, type = type,
+                                       quant_value = 0.9)
+
+data_nor_XHY_states_fivi <- sim_data_nor_XHY_fivi$states
+data_nor_XHY_fivi <- sim_data_nor_XHY_fivi$sim_data
+
+head(data_nor_XHY_fivi)
+summary(data_nor_XHY_fivi)
+
+plot_fivi(data_nor_XHY_fivi, xi_big = xi_big)
 
 
 
@@ -498,6 +576,8 @@ plot_fixi(data_nor_X_fixi)
 
 
 
+
+# Anchor on X binomial (IV setting) -------------------------------------------
 # Define variables for unperturbed and perturbed data set
 def_bin_X <- defData(varname = "A", dist = "normal", 
                      formula = 0, variance = 0.01)
@@ -566,7 +646,7 @@ nsim <- 10
 
 xi <- 8
 xi_big <- 10000
-v_values <- seq(0, 100, by = 1)
+v_values <- seq(0, 10, by = 1)
 
 data_table <- def_bin_X
 data_pert_table <- def_bin_X_pert
@@ -594,7 +674,7 @@ summary(data_bin_X_fixi)
 # red = GLM, green = glare, blue = xi_big
 plot_fixi(data_bin_X_fixi)
 
-# Anchor on X, H and Y --------------------------------------------------------
+# Anchor on X, H and Y poisson ------------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
 def_poi_XHY <- defData(varname = "A", dist = "normal", variance = 0.25,
@@ -660,7 +740,208 @@ plot_fivi(data_poi_XHY_fivi, xi_big = xi_big)
 
 
 
+
+
+
+
+
+
+# Anchor on X, H and Y binomial -----------------------------------------------
+
+# Define variables for unperturbed and perturbed data set
+def_bin_XHY <- defData(varname = "randA", dist = "binary",
+                       formula = 0.5)
+def_bin_XHY <- defData(def_bin_XHY, varname = "A",
+                       formula = "2 * randA - 1")
+def_bin_XHY <- defData(def_bin_XHY, varname = "H", dist = "normal",
+                       variance = 1,
+                       formula = 0)
+def_bin_XHY <- defData(def_bin_XHY, varname = "X", dist = "normal",
+                       variance = 1,
+                       formula = "H + 0.5 * A")
+def_bin_XHY <- defData(def_bin_XHY, varname = "Y",
+                       dist = "binomial", link = "logit", variance = 1,
+                       formula = "0.4 * X - 0.4 * H - 0.8 * A")
+
+def_bin_XHY_pert <- defData(varname = "randA", dist = "binary",
+                            formula = 0.5)
+def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "A",
+                            formula = "2 * randA - 1")
+def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "H", dist = "normal",
+                            variance = 1,
+                            formula = 0)
+def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "X", dist = "normal",
+                            variance = 1,
+                            formula = "H - 1.5 * A")
+def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "Y",
+                            dist = "binomial", link = "logit", variance = 1,
+                            formula = "0.4 * X - 0.4 * H + 0.8 * A")
+
+dd <- genData(300, def_bin_XHY)
+dd_pert <- genData(300, def_bin_XHY_pert)
+hist(dd$Y)
+
+# Initialize
+set.seed(3516)
+nsim <- 10
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- xi_values[-1]
+xi_big <- 10000
+
+data_table <- def_bin_XHY
+data_pert_table <- def_bin_XHY_pert
+formula <- Y ~ X - 1
+A_formula <- ~ A - 1
+family <- binomial
+type <- "pearson"
+
+# Simulate
+sim_data_bin_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
+                                       xi_values = xi_values, xi_big = xi_big,
+                                       data_table = data_table,
+                                       data_pert_table = data_pert_table, 
+                                       formula = formula, A_formula = A_formula,
+                                       family = family, type = type,
+                                       quant_value = 0.9)
+
+data_bin_XHY_states_fivi <- sim_data_bin_XHY_fivi$states
+data_bin_XHY_fivi <- sim_data_bin_XHY_fivi$sim_data
+
+head(data_bin_XHY_fivi)
+summary(data_bin_XHY_fivi)
+
+plot_fivi(data_bin_XHY_fivi, xi_big = xi_big)
+
+
+
 # -----------------------------------------------------------------------------
 
 #path_name <- "C:/Users/maicr/Desktop/Github/glare/data sets/simulation 1/data1"
 #write.table(dd1, file=paste(path_name,Sys.Date(),sep = "_"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Anchor on X normal (IV setting) ---------------------------------------------
+
+# Define variables for unperturbed and perturbed data set
+# def_nor_X <- defData(varname = "randA", dist = "binary",
+#                      formula = 0.5)
+# def_nor_X <- defData(def_nor_X, varname = "A", 
+#                      formula = "2 * randA - 1")
+def_nor_X <- defData(varname = "A", dist = "normal",
+                     formula = 1, variance = 0.1)
+def_nor_X <- defData(def_nor_X, varname = "H", dist = "normal",
+                     formula = 0, variance = 0.1)
+def_nor_X <- defData(def_nor_X, varname = "X", dist = "normal", 
+                     formula = "1.5 * H + A", variance = 0.1)
+def_nor_X <- defData(def_nor_X, varname = "Y", dist = "normal", 
+                     formula = "-0.7 * X - 2 * H", variance = 0.1)
+
+# def_nor_X_pert <- defData(varname = "randA", dist = "binary",
+#                           formula = 0.5)
+# def_nor_X_pert <- defData(def_nor_X_pert, varname = "A", 
+#                           formula = "2 * randA - 1")
+def_nor_X_pert <- defData(varname = "A", dist = "normal",
+                          formula = 1, variance = 0.1)
+def_nor_X_pert <- defData(def_nor_X_pert, varname = "v", 
+                          formula = 2.5) # set perturbation strength
+def_nor_X_pert <- defData(def_nor_X_pert, varname = "H", dist = "normal",
+                          formula = 0, variance = 0.1)
+def_nor_X_pert <- defData(def_nor_X_pert, varname = "X", dist = "normal", 
+                          formula = "1.5 * H + v * A", variance = 0.1)
+def_nor_X_pert <- defData(def_nor_X_pert, varname = "Y", dist = "normal",
+                          formula = "-0.7 * X - 2 * H", variance = 0.1)
+
+dd <- genData(300, def_nor_X)
+dd_pert <- genData(300, def_nor_X_pert)
+hist(dd$Y)
+
+# Initialize for fixed v
+set.seed(4981)
+nsim <- 10
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- xi_values[-1]
+xi_big <- 10000
+
+data_table <- def_nor_X
+data_pert_table <- def_nor_X_pert
+formula <- Y ~ X - 1
+A_formula <- ~ A - 1
+family <- gaussian
+type <- "pearson"
+
+# nobs <- 300
+# rep <- 1
+# data_table <- def_nor_X
+# data_pert_table <- def_nor_X_pert
+
+# Simulate
+sim_data_nor_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
+                                     xi_values = xi_values, xi_big = xi_big,
+                                     data_table = data_table,
+                                     data_pert_table = data_pert_table, 
+                                     formula = formula, A_formula = A_formula,
+                                     family = family, type = type,
+                                     quant_value = 0.9) 
+
+data_nor_X_states_fivi <- sim_data_nor_X_fivi$states
+data_nor_X_fivi <- sim_data_nor_X_fivi$sim_data
+
+head(data_nor_X_fivi)
+summary(data_nor_X_fivi)
+
+plot_fivi(data_nor_X_fivi, xi_big = xi_big)
+
+# Initialize for fixed xi
+set.seed(3316)
+nsim <- 5
+
+xi <- 1.5
+xi_big <- 10000
+v_values <- seq(0, 10, by = 1)
+
+# nsim <- 100
+# 
+# xi <- 1
+# xi_big <- 10000
+# v_values <- seq(0, 4, by = 0.5)
+
+data_table <- def_nor_X
+data_pert_table <- def_nor_X_pert
+formula <- Y ~ X - 1
+A_formula <- ~ A - 1
+family <- gaussian
+type <- "pearson"
+
+# Simulate
+sim_data_nor_X_fixi <- simulate_fixi(nsim = nsim, nobs = 300,
+                                     xi = xi, xi_big = xi_big,
+                                     v_values = v_values, 
+                                     data_table = data_table,
+                                     data_pert_table = data_pert_table, 
+                                     formula = formula, A_formula = A_formula,
+                                     family = family, type = type,
+                                     quant_value = 0.9)
+
+data_nor_X_states_fixi <- sim_data_nor_X_fixi$states
+data_nor_X_fixi <- sim_data_nor_X_fixi$sim_data
+
+head(data_nor_X_fixi)
+summary(data_nor_X_fixi)
+
+# red = GLM, green = glare, blue = xi_big
+plot_fixi(data_nor_X_fixi)
