@@ -9,13 +9,31 @@ plot_rot <- function(sim_data, xi_big = 10000) {
     group_by(xi, gamma) %>%
     summarise(mean_b_ar = mean(b_ar), mean_se_ar = mean(se_ar),
               mean_MSE_pert_ar = mean(MSE_pert_ar),
-              mean_b_glare = mean(b_glare), mean_se_glare = mean(se_glare),
-              mean_MSE_pert_glare = mean(MSE_pert_glare))
+              mean_b_dev = mean(b_dev), mean_se_dev = mean(se_dev),
+              mean_MSE_pert_dev = mean(MSE_pert_dev),
+              mean_b_pea = mean(b_pea), mean_se_pea = mean(se_pea),
+              mean_MSE_pert_pea = mean(MSE_pert_pea))
   
-  # parameter x-axis
-  plot(mean_data$mean_b_ar, mean_data$mean_b_glare)
-  plot(log(mean_data$mean_b_ar), log(mean_data$mean_b_glare))
-  
+  # Plot parameter comparison
+  gg_parameter_data <- data.frame(x = c(mean_data$mean_b_ar[!is.na(mean_data$mean_b_dev)],
+                                        mean_data$mean_b_ar[!is.na(mean_data$mean_b_pea)]),
+                                  y = c(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)],
+                                        mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]),
+                                  group = c(rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)])),
+                                            rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
+
+  gg_parameter <- ggplot(gg_parameter_data, aes(y = y, x = x, color = group, group = group)) +
+    
+    geom_line() +
+    geom_abline(intercept = 0, slope = 1, linetype ="dashed") +
+    geom_vline(xintercept = mean_data$mean_b_ar[mean_data$xi == 0], linetype = "dashed", col = "gray") +
+    geom_vline(xintercept = mean_data$mean_b_ar[which.max(mean_data$xi)], linetype = "dashed", col = "gray") +
+    
+    xlim(mean_data$mean_b_ar[which.max(mean_data$xi)],
+         mean_data$mean_b_ar[mean_data$xi == 0]) +
+    
+    ylab("GLARE parameters") +
+    xlab("AR parameter") 
   
   # Plot ex 2 from Rothenhaeusler
   b_OLS_ar <- mean_data$mean_b_ar[mean_data$gamma == 1]
@@ -26,13 +44,23 @@ plot_rot <- function(sim_data, xi_big = 10000) {
   MSE_IV_ar <- mean_data$mean_MSE_pert_ar[mean_data$xi == xi_big]
   MSE_PA_ar <- mean_data$mean_MSE_pert_ar[mean_data$gamma == 0]
   
-  
-  gg_data <- data.frame(x = c(mean_data$mean_b_ar, mean_data$mean_b_glare),
-                        y = c(mean_data$mean_MSE_pert_ar, mean_data$mean_MSE_pert_glare),
+  gg_data <- data.frame(x = c(mean_data$mean_b_ar,
+                              mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)],
+                              mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]),
+                        y = c(mean_data$mean_MSE_pert_ar,
+                              mean_data$mean_MSE_pert_dev[!is.na(mean_data$mean_b_dev)],
+                              mean_data$mean_MSE_pert_pea[!is.na(mean_data$mean_b_pea)]),
                         group = c(rep("AR", length(mean_data$mean_b_ar)),
-                                      rep("GLARE", length(mean_data$mean_b_ar))))
+                                  rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)])),
+                                  rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
   
-  
+  # Use this data if only AR vs DEV wanted
+  gg_data2 <- data.frame(x = c(mean_data$mean_b_ar,
+                               mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)]),
+                         y = c(mean_data$mean_MSE_pert_ar,
+                               mean_data$mean_MSE_pert_dev[!is.na(mean_data$mean_b_dev)]),
+                         group = c(rep("AR", length(mean_data$mean_b_ar)),
+                                   rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)]))))
   
   gg <- ggplot(gg_data, aes(y = y, x = x, color = group, group = group)) +
     
@@ -49,7 +77,7 @@ plot_rot <- function(sim_data, xi_big = 10000) {
     
     scale_x_continuous(
       
-      limits = c(0.99,2.01),
+      limits = c(0.95,2.05),
       
       # Features of the first axis
       name = "b",
@@ -62,74 +90,87 @@ plot_rot <- function(sim_data, xi_big = 10000) {
       
     ) 
   
-  # 
-  # gg_ar <- ggplot(mean_data, aes(y = mean_MSE_pert_ar)) +
-  #   
-  #   geom_line(aes(x = mean_b_ar)) +
-  #   
-  #   annotate("point", colour = 2, x = b_OLS_ar, y = MSE_OLS_ar) +
-  #   annotate("text", label = "OLS", x = b_OLS_ar - 0.02, y = MSE_OLS_ar + 0.1) +
-  #   annotate("point", colour = 3, x = b_IV_ar, y = MSE_IV_ar) +
-  #   annotate("text", label = "IV", x = b_IV_ar + 0.02, y = MSE_IV_ar + 0.1) +
-  #   annotate("point", colour = 4, x = b_PA_ar, y = MSE_PA_ar) +
-  #   annotate("text", label = "PA", x = b_PA_ar - 0.02, y = MSE_PA_ar + 0.1) +
-  #   
-  #   scale_x_continuous(
-  #     
-  #     limits = c(0.99,2.01),
-  #     
-  #     # Features of the first axis
-  #     name = "b",
-  #     
-  #     # Add a second axis and specify its features
-  #     sec.axis = sec_axis(trans= ~.,
-  #                         name="gamma",
-  #                         breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
-  #                         labels=c("inf",17.7,7.9, 4.5, 2.9, 1.8, 1.1, 0.7, 0.3, 0.0))
-  #     
-  #   )
-  # 
-  # # Plot ex2 analogon for glare
-  # b_OLS_glare <- mean_data$mean_b_glare[mean_data$gamma == 1]
-  # b_IV_glare <- mean_data$mean_b_glare[mean_data$xi == 10000]
-  # b_PA_glare <- mean_data$mean_b_glare[mean_data$gamma == 0]
-  # 
-  # MSE_OLS_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 1]
-  # MSE_IV_glare <- mean_data$mean_MSE_pert_glare[mean_data$xi == 10000]
-  # MSE_PA_glare <- mean_data$mean_MSE_pert_glare[mean_data$gamma == 0]
-  # 
-  # gg_glare <- ggplot(mean_data, aes(y = mean_MSE_pert_glare)) +
-  #   
-  #   geom_line(aes(x = mean_b_glare)) +
-  #   
-  #   annotate("point", colour = 2, x = b_OLS_glare, y = MSE_OLS_glare) +
-  #   annotate("text", label = "OLS", x = b_OLS_glare - 0.02, y = MSE_OLS_glare + 0.1) +
-  #   annotate("point", colour = 3, x = b_IV_glare, y = MSE_IV_glare) +
-  #   annotate("text", label = "IV", x = b_IV_glare + 0.02, y = MSE_IV_glare + 0.1) +
-  #   annotate("point", colour = 4, x = b_PA_glare, y = MSE_PA_glare) +
-  #   annotate("text", label = "PA", x = b_PA_glare - 0.02, y = MSE_PA_glare + 0.1) +
-  #   
-  #   scale_x_continuous(
-  #     
-  #     limits = c(0.99,2.01),
-  #     
-  #     # Features of the first axis
-  #     name = "b",
-  #     
-  #     # Add a second axis and specify its features
-  #     sec.axis = sec_axis(trans= ~.,
-  #                         name="xi",
-  #                         breaks=c(1.000000, 1.111111, 1.222222, 1.333333, 1.444444, 1.555556, 1.666667, 1.777778, 1.888889, 2.000000),
-  #                         labels=c("inf", 8.3, 3.4, 1.8, 0.9, 0.4, 0.1, -0.2, -0.4, -0.5))
-  #     
-  #   )
-  # 
-  # print(gg_ar)
-  # print(gg_glare)
-  
+  print(gg_parameter)
   print(gg)
   invisible(mean_data)
 }
+
+# Plot function for fixed v interventions for Rothenhaeusler ------------------
+plot_rot_fivi <- function(sim_data, xi_big = 10000) {
+  
+  sim_data_glare <- sim_data[sim_data$xi != xi_big, ]
+  sim_data_big <- sim_data[sim_data$xi == xi_big, ]
+  
+  mean_data_glare <- sim_data_glare %>%
+    group_by(xi) %>%
+    summarise(mean_b_dev = mean(b_dev), mean_se_dev = mean(se_dev),
+              mean_logLike_pert_dev = mean(logLik_pert_dev),
+              mean_b_pea = mean(b_pea), mean_se_pea = mean(se_pea),
+              mean_logLike_pert_pea = mean(logLik_pert_pea))
+  
+  mean_data_big <- sim_data_big %>%
+    group_by(xi) %>%
+    summarise(mean_b_dev = mean(b_dev), mean_se_dev = mean(se_dev),
+              mean_logLike_pert_dev = mean(logLik_pert_dev),
+              mean_b_pea = mean(b_pea), mean_se_pea = mean(se_pea),
+              mean_logLike_pert_pea = mean(logLik_pert_pea))
+  
+  gg_data <- data.frame(x = c(mean_data_glare$mean_b_dev,
+                              mean_data_glare$mean_b_pea),
+                        y = c(mean_data_glare$mean_logLike_pert_dev,
+                              mean_data_glare$mean_logLike_pert_pea),
+                        xi = c(mean_data_glare$xi, mean_data_glare$xi),
+                        group = c(rep("DEV", length(mean_data_glare$mean_b_dev)),
+                                  rep("PEA", length(mean_data_glare$mean_b_pea))))
+
+  gg <- ggplot(gg_data, aes(y = y, x = xi, color = group, group = group)) +
+    
+    geom_line() +
+    geom_hline(yintercept = mean_data_big$mean_logLike_pert_dev, linetype = "dashed") +
+    
+    ylab("Averaged quantile of log-likelihood") +
+    
+    scale_x_continuous(
+      
+      # Features of the first axis
+      name = "xi",
+      
+      # Add a second axis and specify its features
+      sec.axis = sec_axis(trans= ~.,
+                          name="b_dev (b_pea)",
+                          breaks=c(0, 5, 10),
+                          labels=c("1.71 (1.71)", "1.17 (1.03)","1.09 (1.01)"))
+      
+    )
+  
+  print(gg)
+  invisible(list(mean_data_glare, mean_data_big))
+}
+
+# Plot function for fixed xi interventions for Rothenhaeusler -----------------
+plot_rot_fixi <- function(sim_data) {
+
+  gg_data <- sim_data
+  gg_data$xi_val <- as.character(sim_data$xi) 
+  
+  gg <- ggplot(gg_data, aes(y = logLik_pert, x = v, color = xi_val, group = xi_val)) +
+    
+    geom_line() +
+    
+    ylab("Averaged quantile of log-likelihood") +
+    xlab("|v|")
+
+  print(gg)
+  invisible(gg_data)
+}
+
+
+
+
+
+
+
+
 
 # Plot function for fixed v interventions -------------------------------------
 plot_fivi <- function(sim_data, xi_big = 10000) {
