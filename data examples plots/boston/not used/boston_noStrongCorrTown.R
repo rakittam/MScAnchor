@@ -52,6 +52,9 @@ hist(bostonPrices$b^2)
 hist(bostonPrices$lstat)
 hist(log(bostonPrices$lstat))
 
+plot(bostonPrices$town, bostonPrices$nox)
+plot(bostonPrices$nox[bostonPrices$town=="Boston Downtown"])
+
 #suggested tranformations:
 #rightskewed->log: medv, crim, dis, nox, zn        and lstat
 #leftskwered->square: ptratio                      and b (even higher)
@@ -91,12 +94,10 @@ for (t in 1:length(perturbation_towns)) {
   xi_values <- c(0, 1, 5, 10, 50, 100, 10000)
   xi_len <- length(xi_values)
   
-  b <- matrix(nrow = xi_len, ncol = 14)
-  colnames(b) <- c("Intercept", "crim", "zn", "indus", "chas", "nox", "rm", "age",
-                   "dis", "rad", "tax", "ptratio", "b", "lstat")
-  b_se <- matrix(nrow = xi_len, ncol = 14)
-  colnames(b_se) <- c("Intercept", "crim", "zn", "indus", "chas", "nox", "rm",
-                      "age", "dis", "rad", "tax", "ptratio", "b", "lstat")
+  b <- matrix(nrow = xi_len, ncol = 7)
+  colnames(b) <- c("Intercept", "crim", "nox", "rm", "age", "dis", "lstat")
+  b_se <- matrix(nrow = xi_len, ncol = 7)
+  colnames(b_se) <- colnames(b)
   
   predictions <- matrix(nrow = xi_len, ncol = nrow(test_set))
   resid_pert <- matrix(nrow = xi_len, ncol = nrow(test_set))
@@ -110,8 +111,8 @@ for (t in 1:length(perturbation_towns)) {
     
     xi <- xi_values[i]
     
-    fit_temp <- glare(formula = log_medv ~ crim + zn + indus + chas + nox + rm +
-                        age + dis + rad + tax + ptratio + b + lstat,
+    fit_temp <- glare(formula = log_medv ~ crim + nox + rm +
+                        age + dis + lstat,
                       A_formula = ~ town, data = train_set, xi = xi,
                       family = gaussian, type = "pearson")
     
@@ -137,9 +138,11 @@ for (t in 1:length(perturbation_towns)) {
   fit_list[[t]] <- list(b, b_se, predictions, RMSE, logLik_indiv, logLik)
 }
 
-#path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/data_examples/bostonHousing/"
-#dir.create(paste(path_name, Sys.Date(), sep = ""))
-#save(fit_list, file = paste(paste(path_name, Sys.Date(), sep = ""), "/fit_list.Rdata", sep =""))
+fit_list_stronCorrTown <- fit_list
+
+path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/data_examples/bostonHousing/"
+dir.create(paste(path_name, Sys.Date(), sep = ""))
+save(fit_list_stronCorrTown, file = paste(paste(path_name, Sys.Date(), sep = ""), "/fit_list_stronCorrTown.Rdata", sep =""))
 
 # Plots -----------------------------------------------------------------------
 
@@ -160,7 +163,7 @@ for (t in 1:length(perturbation_towns)) {
     xi <- xi_values[i]
     
     RMSE <- fit_list[[t]][[4]][i]
-  
+    
     data_temp <- data.frame(test_town, xi, RMSE)
     gg_data <- rbind(gg_data, data_temp)
   }
@@ -223,7 +226,7 @@ nrow(test_set)
 # Initialize and run GLARE
 xi_values <- seq(0, 100, by = 1)
 
-#xi_values <- c(0, 5, 10, 20, 50, 100, 200, 400, 700, 1000)
+xi_values <- c(0, 5, 10, 20, 50, 100, 200, 400, 700, 1000)
 
 xi_len <- length(xi_values)
 
@@ -245,7 +248,7 @@ pb <- txtProgressBar(min = 0, max = xi_len, style = 3)
 for (i in 1:xi_len) {
   
   xi <- xi_values[i]
-
+  
   fit_temp <- glare(formula = log_medv ~ crim + zn + indus + chas + nox + rm +
                       age + dis + rad + tax + ptratio + b + lstat,
                     A_formula = ~ town, data = train_set, xi = xi,
@@ -279,22 +282,21 @@ for (i in 1:xi_len) {
 }
 close(pb)
 
-list <- list(b, b_se, predictions, RMSE, logLik_indiv, logLik)
-path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/data_examples/bostonHousing/"
-dir.create(paste(path_name, Sys.Date(), sep = ""))
-save(list, file = paste(paste(path_name, Sys.Date(), sep = ""), "/list_Medford_all.Rdata", sep =""))
-
-#load("C:/Users/maicr/Desktop/Github/MScAnchor/data sets/data_examples/bostonHousing/2021-01-11/list_Medford_all.Rdata")
-
-b <- list[[1]]
+#list_Medford2 <- list(b, b_se, predictions, RMSE, logLik_indiv, logLik)
+#path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/data_examples/bostonHousing/"
+#dir.create(paste(path_name, Sys.Date(), sep = ""))
+#save(list_Medford2, file = paste(paste(path_name, Sys.Date(), sep = ""), "/list_Medford2.Rdata", sep =""))
 
 
-# Fit GLARE for xi big
+
+
+
+# Fit GLARE for single xi
 xi_big <- 10000
 fit_big <- glare(formula = log_medv ~ crim + zn + indus + chas + nox + rm +
-                    age + dis + rad + tax + ptratio + b + lstat,
-                  A_formula = ~ town, data = train_set, xi = xi_big,
-                  family = gaussian, type = "pearson")
+                   age + dis + rad + tax + ptratio + b + lstat,
+                 A_formula = ~ town, data = train_set, xi = xi_big,
+                 family = gaussian, type = "pearson")
 b_big <- as.numeric(coef(fit_big))
 b_se_big <- fit_big$coef_se
 predictions_big <- predict(fit_big, type = "response", newdata = test_set)
@@ -347,35 +349,3 @@ ggplot(gg_data2, aes(y = RMSE, x = xi)) +
   geom_line() +
   xlab(expression(xi))
 
-
-
-
-# Single comparison -----------------------------------------------------------
-
-# Create observed and unobserved environment
-train_set <- bostonPrices[bostonPrices$town != "Medford", ]
-test_set <- bostonPrices[bostonPrices$town == "Medford", ]
-
-# Fit GLARE for xi fixed
-xi <- 5
-fit_glare <- glare(formula = log_medv ~ crim + zn + indus + chas + nox + rm +
-                     age + dis + rad + tax + ptratio + b + lstat,
-                   A_formula = ~ town, data = train_set, xi = xi,
-                   family = gaussian, type = "pearson")
-summary(fit_glare)
-
-
-b_big <- as.numeric(coef(fit_big))
-b_se_big <- fit_big$coef_se
-predictions_big <- predict(fit_big, type = "response", newdata = test_set)
-resid_pert_big <- test_set$log_medv - predictions_big
-RMSE_big <- sqrt(mean((resid_pert_big)^2))
-
-b_big
-RMSE_big
-
-# Fit GLM
-fit_glm <- glm(formula = log_medv ~ crim + zn + indus + chas + nox + rm +
-                 age + dis + rad + tax + ptratio + b + lstat,
-               data = train_set, family = gaussian)
-summary(fit_glm)
