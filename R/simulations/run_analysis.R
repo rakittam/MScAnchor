@@ -99,6 +99,11 @@ summary(data_poi_X_fixi)
 
 plot_fixi(data_poi_X_fixi)
 
+# Plot pearson and deviance
+plot_deviance(data_poi_X_fixi)
+plot_pearson(data_poi_X_fixi)
+
+
 # sim3: Poisson IV identifiability ---
 
 load(

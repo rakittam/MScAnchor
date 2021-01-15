@@ -313,7 +313,7 @@ onerep_fixi <- function(nobs = 300, data_table, data_pert_table,
   # Generate data with nobs observations
   set.seed(6423) # use the same seeds for each v to use same errors
   dd <- genData(nobs, data_table)
-  # set.seed(6423)
+  set.seed(6423)
   dd_pert <- genData(nobs, data_pert_table)
   
   # Fit glares
@@ -766,9 +766,9 @@ def_poi_X <- defData(varname = "A", dist = "normal",
 def_poi_X <- defData(def_poi_X, varname = "H", dist = "normal",
                      formula = 0, variance = 0.25)
 def_poi_X <- defData(def_poi_X, varname = "X", dist = "normal", 
-                     formula = "1.2 * H + A", variance = 0.25)
+                     formula = "2 * H + A", variance = 0.25)
 def_poi_X <- defData(def_poi_X, varname = "Y", dist = "poisson", link = "log", 
-                     formula = "0.4 * X + 0.5 * H", variance = 1)
+                     formula = "0.4 * X + 1 * H", variance = 1)
 
 def_poi_X_pert <- defData(varname = "A", dist = "normal", 
                           formula = 0, variance = 0.25)
@@ -777,14 +777,20 @@ def_poi_X_pert <- defData(def_poi_X_pert, varname = "v",
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "X", dist = "normal", 
-                          formula = "1.2 * H + v", variance = 0.25)
+                          formula = "2 * H + v", variance = 0.25)
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link = "log",
-                          formula = "0.4 * X + 0.5 * H", variance = 1)
+                          formula = "0.4 * X + 1 * H", variance = 1)
 
 dd <- genData(300, def_poi_X)
 dd_pert <- genData(300, def_poi_X_pert)
-hist(dd$Y)
-hist(dd_pert$Y)
+par(mfrow = c(2,2))
+hist(0.4*dd$X + 1 * dd$H, breaks = 100)
+hist(dd$Y, breaks = 100)
+hist(0.4*dd_pert$X + 1 * dd_pert$H, breaks = 100)
+hist(dd_pert$Y, breaks = 100)
+
+# library(Hmisc)
+#  hist.data.frame(dd[ , c("Y", "X", "A", "H")])
 
 # Initialize for fixed v
 set.seed(35732)
@@ -814,7 +820,7 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
-
+# 
 
 
 
@@ -825,7 +831,7 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
 set.seed(16336)
 
 xi_values <- c(0, 1, 10000)
-v_values <- seq(-5, 5, by = 1)
+v_values <- seq(-10, 10, by = 1)
 
 data_table <- def_poi_X
 data_pert_table <- def_poi_X_pert
@@ -881,7 +887,7 @@ IV_b_poi <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
 # # Save simulated data list
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(IV_b, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
+# save(IV_b_poi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
 # ex3: Binomial IV example ----------------------------------------------------
 
@@ -910,20 +916,18 @@ def_bin_X <- defData(def_bin_X, varname = "X", dist = "normal",
 def_bin_X <- defData(def_bin_X, varname = "Y", dist = "binomial", link = "logit", 
                       formula = "1 * X + 2 * H", variance = 1)
 
-dd <- genData(5000, def_bin_IV)
-par(mfrow = c(2,1))
-hist(dd$Y, breaks = 100)
-hist(1*dd$X + 2 * dd$H, breaks = 100)
-
-# library(Hmisc)
-#  hist.data.frame(dd[ , c("Y", "X", "A", "H")])
-
 def_bin_X_pert....
 
 dd <- genData(300, def_bin_X)
 dd_pert <- genData(300, def_bin_X_pert)
-hist(dd$Y)
-hist(dd_pert$Y)
+par(mfrow = c(2,2))
+hist(0.4*dd$X + 1 * dd$H, breaks = 100)
+hist(dd$Y, breaks = 100)
+hist(0.4*dd_pert$X + 1 * dd_pert$H, breaks = 100)
+hist(dd_pert$Y, breaks = 100)
+
+# library(Hmisc)
+#  hist.data.frame(dd[ , c("Y", "X", "A", "H")])
 
 # Initialize for fixed v
 set.seed(35732)

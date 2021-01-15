@@ -189,8 +189,70 @@ plot_fixi <- function(sim_data) {
   invisible(gg_data)
 }
 
+# Plot function for fixed xi for deviance res ---------------------------------
+plot_deviance <- function(sim_data) {
+  
+  gg_data <- sim_data
+  gg_data$xi_val <- as.character(sim_data$xi) 
+  
+  gg1 <- ggplot(gg_data, aes(y = deviance, x = v, color = xi_val, group = xi_val)) +
+    
+    geom_line() +
+    
+    labs(color = expression(xi)) +
+    ylab("Root of averaged squared deviance residuals") +
+    xlab("v")
+  
+  gg_data2 <- gg_data[gg_data$v <= 5, ]
+  
+  gg2 <- ggplot(gg_data2, aes(y = deviance, x = v, color = xi_val, group = xi_val)) +
+    
+    geom_line() +
+    
+    labs(color = expression(xi)) +
+    ylab("Root of averaged squared deviance residuals") +
+    xlab("v")
+  
+  print(gg1)
+  print(gg2)
+  invisible(gg_data)
+}
+
+
+# Plot function for fixed xi for pearson res ----------------------------------
+plot_pearson <- function(sim_data) {
+  
+  gg_data <- sim_data
+  gg_data$xi_val <- as.character(sim_data$xi) 
+  
+  gg1 <- ggplot(gg_data, aes(y = pearson, x = v, color = xi_val, group = xi_val)) +
+    
+    geom_line() +
+    
+    labs(color = expression(xi)) +
+    ylab("Root of averaged squared pearson residuals") +
+    xlab("v")
+  
+  gg_data2 <- gg_data[gg_data$v <= 5, ]
+  
+  gg2 <- ggplot(gg_data2, aes(y = pearson, x = v, color = xi_val, group = xi_val)) +
+    
+    geom_line() +
+    
+    labs(color = expression(xi)) +
+    ylab("Root of averaged squared pearson residuals") +
+    xlab("v")
+  
+  print(gg1)
+  print(gg2)
+  invisible(gg_data)
+}
+
+
 # Plot function for fixed v interventions for X -------------------------------
 plot_fivi_X <- function(sim_data, xi_big = 10000) {
+  
+  axis_function <- function(value) {mean_data_glare$xi[which(abs(mean_data_glare$mean_b-value)==min(abs(mean_data_glare$mean_b-value)))]}
   
   sim_data_glare <- sim_data[sim_data$xi != xi_big, ]
   sim_data_big <- sim_data[sim_data$xi == xi_big, ]
@@ -226,11 +288,12 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
       sec.axis = sec_axis(trans= ~.,
                           name= "b",
                           breaks=c(0, 2.5, 5, 7.5, 10),
-                          labels=c("0.574", "0.490", "0.469", "0.459", "0.454"))
+                          labels= round(
+                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3)
+                            )
       
       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
     )
-  
   
   print(gg)
   invisible(list(mean_data_glare, mean_data_big))
@@ -255,8 +318,8 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
                           name=expression(xi),
-                          breaks=c(0.4538262, 0.48125, 0.5125, 0.54375, 0.5735984),
-                          labels=c("10", "3.3", "1.3", "0.5", "0"))
+                          breaks=c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75),
+                          labels=sapply(c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75), axis_function))
       
       #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
     ) 
