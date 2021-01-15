@@ -10,8 +10,17 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 
-# -----------------------------------------------------------------------------
-### Plot Function Definitions
+# # execute once to add fonts:
+# font_import(pattern = "lmroman*")
+# font_import(pattern = "lmroman10-regular-webfont.ttf") 
+# 
+# loadfonts()
+# loadfonts(device = "postscript")
+# 
+# loadfonts(device = "win")
+# 
+# font_import()
+ 
 # Plot function for anchor regression comparison ------------------------------
 plot_rot <- function(sim_data, xi_big = 10000) {
   
@@ -30,8 +39,8 @@ plot_rot <- function(sim_data, xi_big = 10000) {
                                   y = c(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)],
                                         mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]),
                                   Method = c(rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)])),
-                                             rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
-  
+                                            rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
+
   gg_parameter <- ggplot(gg_parameter_data, aes(y = y, x = x, color = Method, group = Method)) +
     
     geom_line() +
@@ -61,8 +70,8 @@ plot_rot <- function(sim_data, xi_big = 10000) {
                               mean_data$mean_MSE_pert_dev[!is.na(mean_data$mean_b_dev)],
                               mean_data$mean_MSE_pert_pea[!is.na(mean_data$mean_b_pea)]),
                         Method = c(rep("AR", length(mean_data$mean_b_ar)),
-                                   rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)])),
-                                   rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
+                                  rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)])),
+                                  rep("PEA", length(mean_data$mean_b_pea[!is.na(mean_data$mean_b_pea)]))))
   
   # Use this data if only AR vs DEV wanted
   gg_data2 <- data.frame(x = c(mean_data$mean_b_ar,
@@ -70,7 +79,7 @@ plot_rot <- function(sim_data, xi_big = 10000) {
                          y = c(mean_data$mean_MSE_pert_ar,
                                mean_data$mean_MSE_pert_dev[!is.na(mean_data$mean_b_dev)]),
                          Method = c(rep("AR", length(mean_data$mean_b_ar)),
-                                    rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)]))))
+                                   rep("DEV", length(mean_data$mean_b_dev[!is.na(mean_data$mean_b_dev)]))))
   
   gg <- ggplot(gg_data2, aes(y = y, x = x, color = Method, group = Method)) +
     
@@ -89,7 +98,7 @@ plot_rot <- function(sim_data, xi_big = 10000) {
     
     scale_x_continuous(
       
-      
+
       
       # Features of the first axis
       name = "b",
@@ -134,8 +143,8 @@ plot_rot_fivi <- function(sim_data, xi_big = 10000) {
                               mean_data_glare$mean_logLike_pert_pea),
                         xi = c(mean_data_glare$xi, mean_data_glare$xi),
                         Method = c(rep("DEV", length(mean_data_glare$mean_b_dev)),
-                                   rep("PEA", length(mean_data_glare$mean_b_pea))))
-  
+                                  rep("PEA", length(mean_data_glare$mean_b_pea))))
+
   gg <- ggplot(gg_data, aes(y = y, x = xi, color = Method, group = Method)) +
     
     geom_line() +
@@ -162,7 +171,7 @@ plot_rot_fivi <- function(sim_data, xi_big = 10000) {
 
 # Plot function for fixed xi --------------------------------------------------
 plot_fixi <- function(sim_data) {
-  
+
   gg_data <- sim_data
   gg_data$xi_val <- as.character(sim_data$xi) 
   
@@ -171,21 +180,17 @@ plot_fixi <- function(sim_data) {
     geom_line() +
     
     labs(color = expression(xi)) +
-    ylab("90th percentile of log-likelihood") +
+    ylab("Averaged 90th percentile of log-likelihood") +
     xlab("v")
   
-  gg_data2 <- gg_data[gg_data$v <= 5, ]
-  
-  gg2 <- ggplot(gg_data2, aes(y = logLik_pert, x = v, color = xi_val, group = xi_val)) +
+  gg2 <- ggplot(gg_data, aes(y = logLik_pert, x = v, color = xi_val, group = xi_val)) +
     
     geom_line() +
     
-    labs(color = expression(xi)) +
-    ylab("90th percentile of log-likelihood") +
-    xlab("v")
-  
+    ylab("Averaged 90th percentile of log-likelihood") +
+    xlab("v") + scale_y_continuous(trans = scales::pseudo_log_trans(base = 10))
+
   print(gg1)
-  print(gg2)
   invisible(gg_data)
 }
 
@@ -197,12 +202,12 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
   
   mean_data_glare <- sim_data_glare %>%
     group_by(xi) %>%
-    summarise(mean_b = mean(b), mean_se = mean(b_se),
+    summarise(mean_b = mean(b), mean_se = mean(se),
               mean_logLike_pert = mean(logLik_pert))
   
   mean_data_big <- sim_data_big %>%
     group_by(xi) %>%
-    summarise(mean_b = mean(b), mean_se = mean(b_se),
+    summarise(mean_b = mean(b), mean_se = mean(se),
               mean_logLike_pert = mean(logLik_pert))
   
   gg_data <- mean_data_glare
@@ -230,7 +235,7 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
       
       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
     )
-  
+    
   
   print(gg)
   invisible(list(mean_data_glare, mean_data_big))
@@ -273,12 +278,12 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
   
   mean_data_glare <- sim_data_glare %>%
     group_by(xi) %>%
-    summarise(mean_b = mean(b), mean_se = mean(b_se),
+    summarise(mean_b = mean(b), mean_se = mean(se),
               mean_logLike_pert = mean(logLik_pert))
   
   mean_data_big <- sim_data_big %>%
     group_by(xi) %>%
-    summarise(mean_b = mean(b), mean_se = mean(b_se),
+    summarise(mean_b = mean(b), mean_se = mean(se),
               mean_logLike_pert = mean(logLik_pert))
   
   gg_data <- mean_data_glare
@@ -301,9 +306,8 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
                           name= "b",
-                          breaks = c(0, 2.5, 5, 7.5, 10),
-                          labels = round(
-                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3))
+                          breaks=c(0, 2.5, 5, 7.5, 10),
+                          labels=c("-0.025", "-0.122", "-0.134", "-0.139", "-0.142"))
       
       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
     )
@@ -326,13 +330,13 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
       # Features of the first axis
       name = "b",
       # limits = c(-0.142,-0.020),
-      breaks = c(-0.300, -0.225, -0.150, -0.075, 0.000),
+      breaks =c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
       
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
                           name=expression(xi),
-                          breaks=c(-0.225, -0.150, -0.075),
-                          labels=c(  "2.6", "0.7", "0.2"))
+                          breaks=c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+                          labels=c("8.2", "1.6", "0.6", "0.2", "0"))
       
       #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
     ) 
@@ -340,6 +344,88 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
   print(gg)
   invisible(list(mean_data_glare, mean_data_big))
 }
+
+
+
+# Plot function for fixed v interventions with varying alpha quantile ---------
+
+plot_fivi_quantiles <- function(sim_data, q_values, xi_big = 10000) {
+  
+  xi_len <- length(sim_data[[1]][[2]][, 1])
+  q_len <- length(q_values)
+  nsim <- length(sim_data)
+  
+  quantile_array <- array(dim = c(nsim, xi_len, q_len))
+  for (r in 1:nsim) {
+    for (q in 1:q_len) {
+      quant <- q_values[q]
+      for (x in 1:xi_len) {
+        
+        quantile_array[r, x, q] <- 
+          as.numeric(quantile(sim_data[[r]][[2]][x, -1], quant))
+        
+      }
+    }
+  }
+  
+  # Plot for several xi
+  averaged_quantiles <- apply(quantile_array, c(2,3), mean)
+  colnames(averaged_quantiles) <- q_values
+  
+  xi_values <- as.numeric(sim_data[[1]][[2]][, 1])
+  xi_values <- matrix(xi_values, ncol = 1)
+  colnames(xi_values) <- "xi"
+  
+  quant_data_frame <- as.data.frame(cbind(xi_values, averaged_quantiles))
+  gg_data <-  melt(quant_data_frame, id.vars = 'xi')
+  
+  gg_data2 <- gg_data[gg_data$xi != xi_big, ,]
+  gg_data2$variable <- as.numeric(as.character(gg_data2$variable))
+  #gg_data2$xi <- as.factor(gg_data2$xi)
+  
+  gg1 <- ggplot(gg_data2, aes(y = value, x = variable, color = xi, group = xi)) +
+    geom_line() +
+    ylab("Averaged quantiles of log-likelihood") +
+    xlab(expression(alpha)) +
+    labs(color = expression(xi))
+     
+  
+  # Plot for several alpha
+  averaged_quantiles <- apply(quantile_array, c(2,3), mean)
+  rownames(averaged_quantiles) <- xi_values
+  
+  qqq <- matrix(q_values, nrow = 1)
+  rownames(qqq) <- "alpha"
+  
+  quant_data_frame <- as.data.frame(t(rbind(qqq, averaged_quantiles)))
+  gg_data <-  melt(quant_data_frame, id.vars = 'alpha')
+  
+  gg_data2 <- gg_data[gg_data$variable != xi_big, ,]
+  gg_data2$variable <- as.numeric(as.character(gg_data2$variable))
+  
+  gg2 <- ggplot(gg_data2, aes(y = value, x = variable, color = alpha, group = alpha)) +
+    geom_line() +
+    ylab("Averaged quantiles of log-likelihood") +
+    xlab(expression(xi)) +
+    labs(color = expression(alpha))
+  
+  print(gg1)
+  print(gg2)
+  invisible(sim_data)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -351,7 +437,7 @@ plot_IV <- function(data, causal_parameter = 0.4, xi_big = 10000) {
   mean_data <- data %>%
     group_by(xi, nobs) %>%
     summarise(mean_b = mean(b), se_b = sd(b))
-  
+
   # Calculate CI
   upper <- mean_data$mean_b + qt(0.975, 100 - 1) * mean_data$se_b / sqrt(100)
   lower <- mean_data$mean_b - qt(0.975, 100 - 1) * mean_data$se_b / sqrt(100)
@@ -369,7 +455,7 @@ plot_IV <- function(data, causal_parameter = 0.4, xi_big = 10000) {
     
     xlab("Number of Observation") +
     ylab("Causal Parameter Estimate")
-  
+    
   
   # xi big with CI, nobs all
   gg2 <- ggplot(data = gg_data_big, aes(y = mean_b, x = nobs, group = 1)) +
@@ -381,7 +467,7 @@ plot_IV <- function(data, causal_parameter = 0.4, xi_big = 10000) {
     
     xlab("Number of Observation") +
     ylab("Causal Parameter Estimate")
-  
+
   # xi big with CI, nobs 100-5000  
   gg_data_big2 <- gg_data_big[gg_data_big$nobs >= 100 & gg_data_big$nobs <= 5000, ]
   gg3 <- ggplot(data = gg_data_big2, aes(y = mean_b, x = nobs, group = 1)) +
@@ -430,86 +516,3 @@ plot_IV <- function(data, causal_parameter = 0.4, xi_big = 10000) {
   invisible(mean_data)
   
 }
-
-# -----------------------------------------------------------------------------
-# Plot function for fixed v interventions with varying alpha quantile ---------
-
-plot_fivi_quantiles <- function(sim_data, q_values, xi_big = 10000) {
-  
-  xi_len <- length(sim_data[[1]][[2]][, 1])
-  q_len <- length(q_values)
-  nsim <- length(sim_data)
-  
-  quantile_array <- array(dim = c(nsim, xi_len, q_len))
-  for (r in 1:nsim) {
-    for (q in 1:q_len) {
-      quant <- q_values[q]
-      for (x in 1:xi_len) {
-        
-        quantile_array[r, x, q] <- 
-          as.numeric(quantile(sim_data[[r]][[2]][x, -1], quant))
-        
-      }
-    }
-  }
-  
-  # Plot for several xi
-  averaged_quantiles <- apply(quantile_array, c(2,3), mean)
-  colnames(averaged_quantiles) <- q_values
-  
-  xi_values <- as.numeric(sim_data[[1]][[2]][, 1])
-  xi_values <- matrix(xi_values, ncol = 1)
-  colnames(xi_values) <- "xi"
-  
-  quant_data_frame <- as.data.frame(cbind(xi_values, averaged_quantiles))
-  gg_data <-  melt(quant_data_frame, id.vars = 'xi')
-  
-  gg_data2 <- gg_data[gg_data$xi != xi_big, ,]
-  gg_data2$variable <- as.numeric(as.character(gg_data2$variable))
-  #gg_data2$xi <- as.factor(gg_data2$xi)
-  
-  gg1 <- ggplot(gg_data2, aes(y = value, x = variable, color = xi, group = xi)) +
-    geom_line() +
-    ylab("Averaged quantiles of log-likelihood") +
-    xlab(expression(alpha)) +
-    labs(color = expression(xi))
-  
-  
-  # Plot for several alpha
-  averaged_quantiles <- apply(quantile_array, c(2,3), mean)
-  rownames(averaged_quantiles) <- xi_values
-  
-  qqq <- matrix(q_values, nrow = 1)
-  rownames(qqq) <- "alpha"
-  
-  quant_data_frame <- as.data.frame(t(rbind(qqq, averaged_quantiles)))
-  gg_data <-  melt(quant_data_frame, id.vars = 'alpha')
-  
-  gg_data2 <- gg_data[gg_data$variable != xi_big, ,]
-  gg_data2$variable <- as.numeric(as.character(gg_data2$variable))
-  
-  gg2 <- ggplot(gg_data2, aes(y = value, x = variable, color = alpha, group = alpha)) +
-    geom_line() +
-    ylab("Averaged quantiles of log-likelihood") +
-    xlab(expression(xi)) +
-    labs(color = expression(alpha))
-  
-  print(gg1)
-  print(gg2)
-  invisible(sim_data)
-  
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
