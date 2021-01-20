@@ -1,6 +1,6 @@
 # Define, run and store simulation data sets
 #
-# Date: 14.01.21     Author: Maic Rakitta
+# Date: 19.01.21     Author: Maic Rakitta
 ###############################################################################
 
 library(glare)
@@ -8,7 +8,8 @@ library(simstudy)
 
 # -----------------------------------------------------------------------------
 ### Function Definitions
-# Function definition for anchor regression comparison ------------------------
+
+# Function definition for Anchor Regression Comparison ------------------------
 
 onerep_rot <- function(rep, nobs = 300, data_table, data_pert_table, 
                        formula, A_formula,
@@ -142,7 +143,7 @@ simulate_rot <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
   list(states = states, sim_data = sim_data)
 }
 
-# Function definition for fixed v simulation for Rothenhaeusler ---------------
+# Function definition for fixed v Simulation for Rothenhaeusler ---------------
 
 onerep_rot_fivi <- function(rep, nobs = 300, data_table, data_pert_table, 
                             formula, A_formula, xi_values, xi_big = 10000,
@@ -304,148 +305,9 @@ simulate_rot_fivi <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
   list(states = states, sim_data = sim_data)
 }
 
-# Function definition for fixed xi --------------------------------------------
-
-onerep_fixi <- function(nobs = 300, data_table, data_pert_table, 
-                        formula, A_formula, xi_values,
-                        family, type, quant_value = 0.9) {
-  
-  # Generate data with nobs observations
-  set.seed(6423) # use the same seeds for each v to use same errors
-  dd <- genData(nobs, data_table)
-  set.seed(6423)
-  dd_pert <- genData(nobs, data_pert_table)
-  
-  # Fit glares
-  xi_len <- length(xi_values)
-  b <- matrix(nrow = xi_len, ncol = 1)
-  b_se <- matrix(nrow = xi_len, ncol = 1)
-  logLik_pert_indiv <- matrix(nrow = xi_len, ncol = nobs)
-  logLik_pert <- matrix(nrow = xi_len, ncol = 1)
-  
-  devres <- matrix(nrow = xi_len, ncol = nobs)
-  deviance <- matrix(nrow = xi_len, ncol = 1)
-  
-  peares <- matrix(nrow = xi_len, ncol = nobs)
-  pearson <- matrix(nrow = xi_len, ncol = 1)
-  
-  for (j in 1:xi_len) {
-    xi <- xi_values[j]
-    
-    fit <- glare(formula = formula,
-                 A_formula = A_formula,
-                 data = dd,
-                 xi = xi,
-                 family = family,
-                 type = type)
-    
-    b[j] <- as.numeric(coef(fit))
-    b_se[j] <- fit$coef_se
-    
-    logLik_pert_indiv[j, ] <- logLik(fit, newdata = dd_pert, indiv = TRUE)
-    logLik_pert[j] <- as.numeric(quantile(logLik_pert_indiv[j, ], quant_value))
-    
-    if(family == "poisson") {
-      
-      link_inv <- poisson()$linkinv
-      vari <- poisson()$variance
-      mu <- link_inv(dd_pert$X * b[j])
-      
-      r <- mu
-      p <- which(dd_pert$Y > 0)
-      r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
-      
-      devres[j, ] <- sign(dd_pert$Y - mu) * sqrt(2 * r)
-      
-    } else if(family == "binomial") {
-      
-      link_inv <- binomial()$linkinv
-      vari <- binomial()$variance
-      mu <- link_inv(dd_pert$X * b[j])
-      
-      r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
-        log((1 - dd_pert$Y) / (1 - mu))
-      p <- which(dd_pert$Y == 0)
-      r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
-      q <- which(dd_pert$Y == 1)
-      r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
-      
-      devres[j, ] <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
-      
-    } else if(family == "gaussian"){
-      
-      link_inv <- gaussian()$linkinv
-      vari <- gaussian()$variance
-      mu <- link_inv(dd_pert$X * b[j])
-      
-      n <- length(dd_pert$Y)
-      s <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
-      
-      devres[j, ] <- 1 / s * (dd_pert$Y - mu)
-      
-    } else {
-      stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
-    }
-    
-    # Deviance
-    deviance[j] <- sqrt(mean(devres[j, ]^2))
-    
-    # Pearson
-    V <- vari(mu)
-    peares[j, ] <- (dd_pert$Y - mu)/sqrt(V)
-    pearson[j] <-  sqrt(mean(peares[j, ]^2))
-  }
-  
-  # Return
-  data_frame <- data.frame(xi = xi_values,
-                           b = b,
-                           se = b_se,
-                           logLik_pert = logLik_pert,
-                           deviance = deviance,
-                           pearson = pearson)
-  
-  list(data = data_frame,
-       logLik = logLik_pert_indiv,
-       devres = devres,
-       peares = peares)
-}
 
 
-# Define simulation function
-simulate_fixi <- function(nobs = 300, xi_values, v_values, 
-                          data_table, data_pert_table, 
-                          formula, A_formula, family, type,
-                          quant_value = 0.9) {
-  
-  v_len <- length(v_values)
-  
-  data_list <- list()
-  
-  pb <- txtProgressBar(min = 0, max = v_len, style = 3)
-  for (s in 1:v_len) {
-    data_pert_table_temp <- updateDef(data_pert_table,
-                                      changevar = "v",
-                                      newformula = v_values[s])
-    data_temp <-
-      onerep_fixi(nobs = nobs,
-                  data_table = data_table,
-                  data_pert_table = data_pert_table_temp, 
-                  formula = formula, A_formula = A_formula,
-                  xi_values = xi_values, family = family, type = type,
-                  quant_value = quant_value)
-    
-    data_list[[s]] <- list(v_value = v_values[s],
-                           data = data_temp)
-    
-    Sys.sleep(0.1)
-    setTxtProgressBar(pb, s)
-  }
-  close(pb)
-  
-  data_list
-}
-
-# Function definition for fixed v simulation ----------------------------------
+# Function definition for fixed v ---------------------------------------------
 
 onerep_fivi <- function(rep, nobs = 300, data_table, data_pert_table, 
                         formula, A_formula, xi_values,
@@ -524,7 +386,157 @@ simulate_fivi <- function(nsim, nobs = 300, xi_values,
   list(states = states, sim_data = sim_data)
 }
 
-# Function definition for IV parameter identifiability ------------------------
+# Function definition for fixed xi --------------------------------------------
+
+onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table, 
+                        formula, A_formula, xi_values, v_values,
+                        family, type, quant_value = 0.9, rep_seed) {
+  
+  v_len <- length(v_values)
+  
+  data_frame <- data.frame()
+  
+  for (s in 1:v_len) {
+    data_pert_table_temp <- updateDef(data_pert_table,
+                                      changevar = "v",
+                                      newformula = v_values[s])
+    
+    # Generate data with nobs observations
+    set.seed(rep_seed) # use the same seeds for each v to use same errors
+    dd <- genData(nobs, data_table)
+    set.seed(rep_seed + 200)
+    dd_pert <- genData(nobs, data_pert_table_temp)
+    
+    # Fit glares
+    xi_len <- length(xi_values)
+    b <- matrix(nrow = xi_len, ncol = 1)
+    b_se <- matrix(nrow = xi_len, ncol = 1)
+    logLik_pert_indiv <- matrix(nrow = xi_len, ncol = nobs)
+    logLik_pert <- matrix(nrow = xi_len, ncol = 1)
+    
+    devres <- matrix(nrow = xi_len, ncol = nobs)
+    deviance <- matrix(nrow = xi_len, ncol = 1)
+    
+    peares <- matrix(nrow = xi_len, ncol = nobs)
+    pearson <- matrix(nrow = xi_len, ncol = 1)
+    
+    for (j in 1:xi_len) {
+      xi <- xi_values[j]
+      
+      fit <- glare(formula = formula,
+                   A_formula = A_formula,
+                   data = dd,
+                   xi = xi,
+                   family = family,
+                   type = type)
+      
+      b[j] <- as.numeric(coef(fit))
+      b_se[j] <- fit$coef_se
+      
+      logLik_pert_indiv[j, ] <- logLik(fit, newdata = dd_pert, indiv = TRUE)
+      logLik_pert[j] <- as.numeric(quantile(logLik_pert_indiv[j, ], quant_value))
+      
+      if(family == "poisson") {
+        
+        link_inv <- poisson()$linkinv
+        vari <- poisson()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        r <- mu
+        p <- which(dd_pert$Y > 0)
+        r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
+        
+        devres[j, ] <- sign(dd_pert$Y - mu) * sqrt(2 * r)
+        
+      } else if(family == "binomial") {
+        
+        link_inv <- binomial()$linkinv
+        vari <- binomial()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
+          log((1 - dd_pert$Y) / (1 - mu))
+        p <- which(dd_pert$Y == 0)
+        r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
+        q <- which(dd_pert$Y == 1)
+        r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
+        
+        devres[j, ] <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
+        
+      } else if(family == "gaussian"){
+        
+        link_inv <- gaussian()$linkinv
+        vari <- gaussian()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        n <- length(dd_pert$Y)
+        s_hat <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
+        
+        devres[j, ] <- 1 / s_hat * (dd_pert$Y - mu)
+        
+      } else {
+        stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
+      }
+      
+      # Deviance
+      deviance[j] <- sqrt(mean(devres[j, ]^2))
+      
+      # Pearson
+      V <- vari(mu)
+      peares[j, ] <- (dd_pert$Y - mu)/sqrt(V)
+      pearson[j] <-  sqrt(mean(peares[j, ]^2))
+    }
+    
+    # Return
+    data_frame_temp <- data.frame(rep = rep, v = v_values[s], xi = xi_values,
+                                  b = b,
+                                  se = b_se,
+                                  logLik_pert = logLik_pert,
+                                  deviance = deviance,
+                                  pearson = pearson)
+    
+    data_frame <- rbind(data_frame, data_frame_temp)
+  }
+  
+  list(data = data_frame,
+       logLik = logLik_pert_indiv,
+       devres = devres,
+       peares = peares)
+}
+
+
+# Define simulation function
+simulate_fixi <- function(nsim = 100, nobs = 300, xi_values, v_values, 
+                          data_table, data_pert_table, 
+                          formula, A_formula, family, type,
+                          quant_value = 0.9, start_seed) {
+  
+  data_list <- list()
+  
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
+  for (r in 1:nsim) {
+    
+    data_temp <-
+      onerep_fixi(rep = r, nobs = nobs,
+                  data_table = data_table,
+                  data_pert_table = data_pert_table, 
+                  formula = formula, A_formula = A_formula,
+                  xi_values = xi_values, v_values = v_values,
+                  family = family, type = type,
+                  quant_value = quant_value, rep_seed = r + start_seed)
+    
+    data_list[[r]] <- list(rep = r,
+                           data = data_temp)
+    
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb, r)
+  }
+  close(pb)
+  
+  data_list
+}
+
+# Function definition for IV causal parameter estimation ----------------------
 
 onerep_IV <- function(rep, nobs_values = 300, data_table, 
                       formula, A_formula, xi_values,
@@ -539,15 +551,12 @@ onerep_IV <- function(rep, nobs_values = 300, data_table,
     
     # Generate data set with nobs observations
     dd <- genData(nobs, data_table)
-    # dd_pert <- genData(nobs, data_pert_table)
     
     xi_len <- length(xi_values)
     
     b <- matrix(nrow = xi_len, ncol = 1)
     b_se <- matrix(nrow = xi_len, ncol = 1)
-    
-    # logLik_pert <- numeric(xi_len)
-    
+
     for (i in 1:xi_len) {
       
       xi <- xi_values[i]
@@ -561,10 +570,7 @@ onerep_IV <- function(rep, nobs_values = 300, data_table,
       
       b[i] <- as.numeric(coef(fit_temp))
       b_se[i] <- fit_temp$coef_se
-      
-      # logLik_pert_indiv <- logLik(fit_temp, newdata = dd_pert, indiv = TRUE)
-      # logLik_pert[i] <-
-      #   as.numeric(quantile(logLik_pert_indiv, quant_value))
+    
     }
     
     # Return
@@ -590,12 +596,6 @@ simulate_IV <- function(nsim, nobs_values = 300, xi_values,
   b_data <- as.data.frame(matrix(ncol = 5, nrow = 0))
   colnames(b_data) <- c("rep", "nobs", "xi", "b", "b_se")
   
-  
-  # 
-  # sim_data <- data.frame(matrix(nrow = nsim * (xi_len + 2), ncol = 5))
-  # colnames(sim_data) <- c("rep", "xi",
-  #                         "b", "se", "logLik_pert")
-  # 
   pb <- txtProgressBar(min = 0, max = nsim, style = 3)
   for (r in 1:nsim) {
     states[r, ] <- .Random.seed
@@ -608,14 +608,6 @@ simulate_IV <- function(nsim, nobs_values = 300, xi_values,
     
     b_data <- rbind(b_data, data_temp)
     
-    # sim_data[((xi_len + 2) * (r - 1) + + 1):((xi_len + 2) * r), ] <- 
-    #   onerep_fivi(rep = r,
-    #               data_table = data_table, data_pert_table = data_pert_table, 
-    #               formula = formula, A_formula = A_formula,
-    #               xi_values = xi_values, xi_big = xi_big,
-    #               family = family, type = type,
-    #               quant_value = quant_value)
-    
     Sys.sleep(0.1)
     setTxtProgressBar(pb, r)
   }
@@ -624,11 +616,11 @@ simulate_IV <- function(nsim, nobs_values = 300, xi_values,
   list(states = states, sim_data = b_data)
 }
 
+
 # -----------------------------------------------------------------------------
 ### Generate data and store
-# ex1: Rothenhaeusler Example -------------------------------------------------
 
-# sim1: Rothenhaeusler Comparison ---
+# ex1: Rothenhaeusler Example -------------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
 def_rot <- defData(varname = "randA", dist = "binary",
@@ -658,19 +650,43 @@ def_rot_pert <- defData(def_rot_pert, varname = "Y", dist = "normal",
                         variance = 1,
                         formula = "X + 2 * H")
 
+# Parameters of linear predictor
+b <- 1
+h <- 2
+
+# Distribution histogram
 dd <- genData(300, def_rot)
 dd_pert <- genData(300, def_rot_pert)
-hist(dd$Y)
+par(mfrow = c(2,2))
+hist(b*dd$X + h * dd$H, breaks = 100)
+hist(dd$Y, breaks = 100)
+hist(b*dd_pert$X + h * dd_pert$H, breaks = 100)
+hist(dd_pert$Y, breaks = 100)
 
-# Initialize for Rothenhaeusler comparison
+# Initialize
+data_table <- def_rot
+data_pert_table <- def_rot_pert
+formula <- Y ~ X - 1
+A_formula <- ~ A - 1
+family <- "gaussian"
+type <- "deviance"
+
+# sim1: Rothenhaeusler Comparison ---
+
 set.seed(1813)
 
+nsim <- 100
+
+xi_values <- seq(-0.5, 50, by = 0.1)
+xi_big <-  10000
+
 # Simulate
-sim_data_rot <- simulate_rot(nsim = 100, nobs = 1000,
-                             xi_values = seq(-0.5, 50, by = 0.1), xi_big = 10000,
-                             data_table = def_rot, data_pert_table = def_rot_pert, 
-                             formula = Y ~ X - 1, A_formula = ~ A - 1,
-                             family = "gaussian")
+sim_data_rot <- simulate_rot(nsim = nsim, nobs = 300,
+                             xi_values = xi_values, xi_big = xi_big,
+                             data_table = data_table,
+                             data_pert_table = data_pert_table, 
+                             formula = formula, A_formula = A_formula,
+                             family = family)
 
 # # Save simulated data list
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/"
@@ -679,28 +695,6 @@ sim_data_rot <- simulate_rot(nsim = 100, nobs = 1000,
 
 # sim2: Rothenhaeusler with fixed v ---
 
-# Define Perturbation set with v input
-def_rot_pert <- defData(varname = "randA", dist = "binary",
-                        formula = 0.5)
-def_rot_pert <- defData(def_rot_pert, varname = "H", dist = "normal",
-                        variance = 1,
-                        formula = 0)
-def_rot_pert <- defData(def_rot_pert, varname = "A", 
-                        formula = "2 * randA - 1")
-def_rot_pert <- defData(def_rot_pert, varname = "v", 
-                        formula = 1.8)
-def_rot_pert <- defData(def_rot_pert, varname = "X", dist = "normal", 
-                        variance = 1,
-                        formula = "v + H")
-def_rot_pert <- defData(def_rot_pert, varname = "Y", dist = "normal", 
-                        variance = 1,
-                        formula = "X + 2 * H")
-
-dd <- genData(300, def_rot)
-dd_pert <- genData(300, def_rot_pert)
-hist(dd$Y)
-
-# Initialize for fixed v
 set.seed(8653)
 nsim <- 100
 
@@ -708,14 +702,8 @@ xi_values <- seq(0, 10, by = 0.1)
 xi_values <- xi_values[-1]
 xi_big <- 10000
 
-data_table <- def_rot
-data_pert_table <- def_rot_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "gaussian"
-
 # Simulate
-sim_data_rot_X_fivi <- simulate_rot_fivi(nsim = nsim, nobs = 300,
+sim_data_rot_X_fivi <- simulate_rot_fivi(nsim = nsim, nobs = 1000,
                                          xi_values = xi_values, xi_big = xi_big,
                                          data_table = data_table,
                                          data_pert_table = data_pert_table, 
@@ -730,35 +718,29 @@ sim_data_rot_X_fivi <- simulate_rot_fivi(nsim = nsim, nobs = 300,
 
 # sim3: Rothenhaeusler with fixed xi ---
 
-# Initialize for fixed xi
-set.seed(7863)
+start_seed <- 7863
 
-xi_values <- c(0, 0.2, 0.5, 0.8, 10000)
-v_values <- seq(0, 10, by = 0.1)
+nsim <- 100
 
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "gaussian"
-type <- "deviance"
+xi_values <- c(0, 1, 3, 5, 10000)
+v_values <- seq(0, 10, by = 1)
 
 # Simulate
-sim_data_rot_X_fixi <- simulate_fixi(nobs = 300,
+sim_data_rot_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                      xi_values = xi_values,
                                      v_values = v_values, 
                                      data_table = data_table,
                                      data_pert_table = data_pert_table, 
                                      formula = formula, A_formula = A_formula,
                                      family = family, type = type,
-                                     quant_value = 0.9)
+                                     quant_value = 0.9, start_seed = start_seed)
 
 # # Save simulated data list
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_rot_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
-# ex2: Poisson IV example -----------------------------------------------------
-
-# sim1: Poisson IV for fixed v ---
+# ex2: Poisson IV Example -----------------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
 def_poi_X <- defData(varname = "A", dist = "normal", 
@@ -781,30 +763,35 @@ def_poi_X_pert <- defData(def_poi_X_pert, varname = "X", dist = "normal",
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link = "log",
                           formula = "0.4 * X + 1 * H", variance = 1)
 
+# Parameters of linear predictor
+b <- 0.4
+h <- 1
+
+# Distribution histogram
 dd <- genData(300, def_poi_X)
 dd_pert <- genData(300, def_poi_X_pert)
 par(mfrow = c(2,2))
-hist(0.4*dd$X + 1 * dd$H, breaks = 100)
+hist(b*dd$X + h * dd$H, breaks = 100)
 hist(dd$Y, breaks = 100)
-hist(0.4*dd_pert$X + 1 * dd_pert$H, breaks = 100)
+hist(b*dd_pert$X + h * dd_pert$H, breaks = 100)
 hist(dd_pert$Y, breaks = 100)
 
-# library(Hmisc)
-#  hist.data.frame(dd[ , c("Y", "X", "A", "H")])
-
-# Initialize for fixed v
-set.seed(35732)
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- c(xi_values, 10000)
-
+# Initialize
 data_table <- def_poi_X
 data_pert_table <- def_poi_X_pert
 formula <- Y ~ X - 1
 A_formula <- ~ A - 1
 family <- "poisson"
 type <- "deviance"
+
+# sim1: Poisson IV for fixed v ---
+
+set.seed(35732)
+
+nsim <- 100
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- c(xi_values, 10000)
 
 # Simulate
 sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
@@ -815,67 +802,48 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
                                      family = family, type = type,
                                      quant_value = 0.9) 
 
-
-# # Save simulated data list
+# # Save data
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
-# 
-
-
-
 
 # sim2: Poisson IV for fixed xi ---
 
-# Initialize for fixed xi
-set.seed(16336)
+start_seed <- 96574
 
-xi_values <- c(0, 1, 10000)
+nsim <- 100
+
+xi_values <- c(0, 1, 50, 10000)
 v_values <- seq(-10, 10, by = 1)
 
-data_table <- def_poi_X
-data_pert_table <- def_poi_X_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "poisson"
-type <- "deviance"
-
 # Simulate
-sim_data_poi_X_fixi <- simulate_fixi(nobs = 300,
+sim_data_poi_X_fixi <- simulate_fixi(nsim = nsim, nobs = 300,
                                      xi_values = xi_values,
                                      v_values = v_values, 
                                      data_table = data_table,
                                      data_pert_table = data_pert_table, 
                                      formula = formula, A_formula = A_formula,
                                      family = family, type = type,
-                                     quant_value = 0.9)
+                                     quant_value = 0.9, start_seed = start_seed)
 
-# # Save simulated data list
+# # Save data
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
-
 # sim3: IV investigation for poisson ---
 
-# Initialize for fixed v
 set.seed(88435)
+
 nsim <- 100
+
 # nobs_values <- c(seq(10, 100, by = 10),
 #                  seq(100, 1000, by = 100)[-1],
 #                  seq(1000, 10000, by = 1000)[-1])
-
 nobs_values <- c(300, 5000)
 
 # xi_values <- seq(0, 100, by = 10)
 xi_values <- c(0, 1, 50, 10000)
-
-data_table <- def_poi_X
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "poisson"
-type <- "deviance"
-
 
 # Simulate
 IV_b_poi <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
@@ -884,64 +852,70 @@ IV_b_poi <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
                         formula = formula, A_formula = A_formula,
                         family = family, type = type)
 
-# # Save simulated data list
+# # Save data
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(IV_b_poi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
+
+
+
+
 # ex3: Binomial IV example ----------------------------------------------------
 
-
-# sim1: Poisson IV for fixed v ---
-
-# Investigate mean
-def_bin_X <- defData( varname = "Y", dist = "binomial", link = "logit", 
-                       formula = "0.5", variance = 1)
-dd <- genData(5000, def_bin_X)
-hist(dd$Y)
-
 # Define variables for unperturbed and perturbed data set
-def_bin_X <- defData(varname = "randA", dist = "binary",
-                      formula = 0.5)
-def_bin_X <- defData(def_bin_X, varname = "A", 
-                      formula = "2 * randA - 1")
-
-
 def_bin_X <- defData(varname = "A", dist = "normal", 
-                      formula = 1, variance = 0.25)
+                     formula = 1, variance = 0.25)
 def_bin_X <- defData(def_bin_X, varname = "H", dist = "normal",
-                      formula = 2, variance = 0.25)
+                     formula = 2, variance = 0.25)
 def_bin_X <- defData(def_bin_X, varname = "X", dist = "normal", 
-                      formula = "- 3 * H + 5 * A", variance = 0.25)
+                     formula = "- 3 * H + 2.5 * A", variance = 0.25)
 def_bin_X <- defData(def_bin_X, varname = "Y", dist = "binomial", link = "logit", 
-                      formula = "1 * X + 2 * H", variance = 1)
+                     formula = "1 * X + 2 * H", variance = 1)
 
-def_bin_X_pert....
+def_bin_X_pert <- defData(varname = "A", dist = "normal", 
+                          formula = 1, variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "H", dist = "normal",
+                          formula = 2, variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "v", 
+                          formula = 3.5) # set perturbation strength
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "X", dist = "normal", 
+                          formula = "- 3 * H + v ", variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial",
+                          link = "logit", 
+                          formula = "1 * X + 2 * H", variance = 1)
 
+# Parameters of linear predictor
+b <- 1
+h <- 2
+
+# Distribution histogram
 dd <- genData(300, def_bin_X)
 dd_pert <- genData(300, def_bin_X_pert)
-par(mfrow = c(2,2))
-hist(0.4*dd$X + 1 * dd$H, breaks = 100)
+par(mfrow = c(2,3))
+hist(b*dd$X + h * dd$H, breaks = 100)
+hist(exp(b*dd$X + h * dd$H)/(1+exp(b*dd$X + h * dd$H)), breaks = 100)
 hist(dd$Y, breaks = 100)
-hist(0.4*dd_pert$X + 1 * dd_pert$H, breaks = 100)
+hist(b*dd_pert$X + h * dd_pert$H, breaks = 100)
+hist(exp(b * dd_pert$X + h * dd_pert$H)/(1+exp(b * dd_pert$X + h * dd_pert$H)), breaks = 100)
 hist(dd_pert$Y, breaks = 100)
 
-# library(Hmisc)
-#  hist.data.frame(dd[ , c("Y", "X", "A", "H")])
-
-# Initialize for fixed v
-set.seed(35732)
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- c(xi_values, 10000)
-
+# Initialize
 data_table <- def_bin_X
 data_pert_table <- def_bin_X_pert
 formula <- Y ~ X - 1
 A_formula <- ~ A - 1
 family <- "binomial"
 type <- "deviance"
+
+# sim1: Binomial IV for fixed v ---
+
+set.seed(35732)
+
+nsim <- 100
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- c(xi_values, 10000)
 
 # Simulate
 sim_data_bin_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
@@ -958,34 +932,24 @@ sim_data_bin_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_bin_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
-
-
-
-
 # sim2: Binomial IV for fixed xi ---
 
-# Initialize for fixed xi
-set.seed(16336)
+start_seed <- 16336
+
+nsim <- 100
 
 xi_values <- c(0, 1, 10000)
-v_values <- seq(-5, 5, by = 1)
-
-data_table <- def_poi_X
-data_pert_table <- def_poi_X_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "binomial"
-type <- "deviance"
+v_values <- seq(-10, 10, by = 0.1)
 
 # Simulate
-sim_data_bin_X_fixi <- simulate_fixi(nobs = 300,
+sim_data_bin_X_fixi <- simulate_fixi(nsim = nsim, nobs = 300,
                                      xi_values = xi_values,
                                      v_values = v_values, 
                                      data_table = data_table,
                                      data_pert_table = data_pert_table, 
                                      formula = formula, A_formula = A_formula,
                                      family = family, type = type,
-                                     quant_value = 0.9)
+                                     quant_value = 0.9, start_seed)
 
 # # Save simulated data list
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/"
@@ -995,25 +959,17 @@ sim_data_bin_X_fixi <- simulate_fixi(nobs = 300,
 
 # sim3: IV investigation for binomial ---
 
-causal_parameter <- 1
-
-# Initialize for fixed v
 set.seed(58435)
+
 nsim <- 100
+
 # nobs_values <- c(seq(10, 100, by = 10),
 #                  seq(100, 1000, by = 100)[-1],
 #                  seq(1000, 10000, by = 1000)[-1])
-
 nobs_values <- c(300, 5000)
 
 # xi_values <- seq(0, 100, by = 10)
 xi_values <- c(0, 1, 50, 10000)
-
-data_table <- def_bin_IV
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "binomial"
-type <- "deviance"
 
 # Simulate
 IV_b_bin <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
@@ -1026,10 +982,6 @@ IV_b_bin <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(IV_b_bin, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
-
-
-
-
 
 
 
@@ -1062,23 +1014,33 @@ def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y",
                             dist = "poisson", link = "log", 
                             formula = "0.8 * X - H - 2 * A") # set perturbation 
 
+# Parameters of linear predictor
+b <- 0.8
+h <- -1
+a <- -2
+
+# Distribution histogram
 dd <- genData(300, def_poi_XHY)
 dd_pert <- genData(300, def_poi_XHY_pert)
 hist(dd$Y)
 
 # Initialize
-set.seed(22416)
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- c(xi_values, 10000)
-
 data_table <- def_poi_XHY
 data_pert_table <- def_poi_XHY_pert
 formula <- Y ~ X - 1
 A_formula <- ~ A - 1
 family <- "poisson"
 type <- "deviance"
+
+# sim1: Binomial IV for fixed v ---
+
+set.seed(22416)
+
+nsim <- 100
+
+xi_values <- seq(0, 10, by = 0.1)
+xi_values <- c(xi_values, 10000)
+
 
 # Simulate
 sim_data_poi_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
@@ -1089,329 +1051,12 @@ sim_data_poi_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                        family = family, type = type,
                                        quant_value = 0.9)
 
-# Save simulated data list
-path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/"
-dir.create(paste(path_name, Sys.Date(), sep = ""))
-save(sim_data_poi_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
-
-# ex5: Binomial with Anchor on X, H and Y --------------------------------------
-
-# Define variables for unperturbed and perturbed data set
-def_bin_XHY <- defData(varname = "A", dist = "normal", variance = 0.25,
-                       formula = 0)
-def_bin_XHY <- defData(def_bin_XHY, varname = "H", dist = "normal",
-                       variance = 0.25,
-                       formula = "0.6 + A",)
-def_bin_XHY <- defData(def_bin_XHY, varname = "X", dist = "normal",
-                       variance = 0.25,
-                       formula = "H + A")
-def_bin_XHY <- defData(def_bin_XHY, varname = "Y",
-                       dist = "binsson", link = "log", 
-                       formula = "0.8 * X - H - A")
-
-def_bin_XHY_pert <- defData(varname = "A", dist = "normal", 
-                            variance = 0.25,
-                            formula = 0)
-def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "H", dist = "normal",
-                            variance = 0.25,
-                            formula = "0.6 + 0.2 * A") # set perturbation
-def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "X", dist = "normal", 
-                            variance = 0.25,
-                            formula = "H - 1 * A") # set perturbation 
-def_bin_XHY_pert <- defData(def_bin_XHY_pert, varname = "Y",
-                            dist = "binsson", link = "log", 
-                            formula = "0.8 * X - H - 2 * A") # set perturbation 
-
-dd <- genData(300, def_bin_XHY)
-dd_pert <- genData(300, def_bin_XHY_pert)
-hist(dd$Y)
-
-# Initialize
-set.seed(22416)
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- c(xi_values, 10000)
-
-data_table <- def_bin_XHY
-data_pert_table <- def_bin_XHY_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "binomial"
-type <- "deviance"
-
-# Simulate
-sim_data_bin_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
-                                       xi_values = xi_values,
-                                       data_table = data_table,
-                                       data_pert_table = data_pert_table, 
-                                       formula = formula, A_formula = A_formula,
-                                       family = family, type = type,
-                                       quant_value = 0.9)
-
-# Save simulated data list
-path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/"
-dir.create(paste(path_name, Sys.Date(), sep = ""))
-save(sim_data_bin_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# # Save simulated data list
+# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_poi_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
 
 
 
 
-
-
-
-
-# -----------------------------------------------------------------------------
-# QUANTILE SACHEN:
-# Function definition for fixed v simulation with quantiles -------------------
-
-onerep_fivi_list <- function(rep, nobs = 300, data_table, data_pert_table, 
-                             formula, A_formula, xi_values, xi_big = 10000,
-                             family, type) {
-  
-  # Generate data set with nobs observations
-  dd <- genData(nobs, data_table)
-  dd_pert <- genData(nobs, data_pert_table)
-  
-  xi_len <- length(xi_values)
-  
-  b_glare <- matrix(nrow = xi_len, ncol = 1)
-  b_glare_se <- matrix(nrow = xi_len, ncol = 1)
-  
-  logLik_glare_pert <- matrix(nrow = xi_len, ncol = nobs)
-  
-  for (i in 1:xi_len) {  
-    
-    xi <- xi_values[i]
-    
-    fit_temp <- glare(formula = formula,
-                      A_formula = A_formula,
-                      data = dd,
-                      xi = xi,
-                      family = family,
-                      type = type)
-    
-    b_glare[i] <- as.numeric(coef(fit_temp))
-    b_glare_se[i] <- fit_temp$coef_se
-    
-    logLik_glare_pert[i, ] <- logLik(fit_temp, newdata = dd_pert, indiv = TRUE)
-    
-  }
-  
-  # Fit GLM
-  fit_glm <- glare(formula = formula,
-                   A_formula = A_formula,
-                   data = dd,
-                   xi = 0,
-                   family = family,
-                   type = type)
-  
-  b_glm <- as.numeric(coef(fit_glm))
-  b_glm_se <- fit_glm$coef_se
-  
-  logLik_glm_pert <- logLik(fit_glm, newdata = dd_pert, indiv = TRUE)
-  
-  # Fit glare with xi big
-  fit_big <- glare(formula = formula,
-                   A_formula = A_formula,
-                   data = dd,
-                   xi = xi_big,
-                   family = family,
-                   type = type)
-  
-  b_big <- as.numeric(coef(fit_big))
-  b_big_se <- fit_big$coef_se
-  
-  logLik_big_pert <- logLik(fit_big, newdata = dd_pert, indiv = TRUE)
-  
-  # Return
-  coeffs <- data.frame(rep = rep,
-                       xi = c(0, xi_big, xi_values),
-                       b = c(b_glm, b_big, b_glare),
-                       b_se = c(b_glm_se, b_big_se, b_glare_se))
-  
-  logLik_pert <- rbind(logLik_glm_pert, logLik_glare_pert, logLik_big_pert)
-  logLiks <- cbind(c(0, xi_values, xi_big), logLik_pert)
-  
-  list(coeffs, logLiks)
-}
-
-# Define simulation function
-simulate_fivi_list <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
-                               data_table, data_pert_table, 
-                               formula, A_formula, family, type) {
-  
-  xi_len <- length(xi_values)
-  
-  states <- array(dim = c(nsim, 626))
-  
-  sim_data <- list()
-  
-  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
-  for (r in 1:nsim) {
-    states[r, ] <- .Random.seed
-    sim_data[[r]] <- 
-      onerep_fivi_list(rep = r,
-                       data_table = data_table, data_pert_table = data_pert_table, 
-                       formula = formula, A_formula = A_formula,
-                       xi_values = xi_values, xi_big = xi_big,
-                       family = family, type = type)
-    
-    Sys.sleep(0.1)
-    setTxtProgressBar(pb, r)
-  }
-  close(pb)
-  
-  list(states = states, sim_data = sim_data)
-}
-
-
-# sim...: Anchor on X poisson (IV setting) plotting quantiles -----------------
-
-# Define variables for unperturbed and perturbed data set
-def_poi_X <- defData(varname = "A", dist = "normal", 
-                     formula = 0, variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "H", dist = "normal",
-                     formula = 0, variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "X", dist = "normal", 
-                     formula = "1.2 * H + A", variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "Y", dist = "poisson", link = "log", 
-                     formula = "0.4 * X + 0.5 * H", variance = 1)
-
-def_poi_X_pert <- defData(varname = "A", dist = "normal", 
-                          formula = 0, variance = 0.25)
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "v", 
-                          formula = 4) # set perturbation strength
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "H", dist = "normal",
-                          formula = 0, variance = 0.25)
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "X", dist = "normal", 
-                          formula = "1.3 * H + v", variance = 0.25)
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link = "log",
-                          formula = "0.4 * X + 0.5 * H", variance = 1)
-
-dd <- genData(300, def_poi_X)
-dd_pert <- genData(300, def_poi_X_pert)
-hist(dd$Y)
-hist(dd_pert$Y)
-
-# Initialize for fixed v
-set.seed(14981)
-nsim <- 10
-
-xi_values <- seq(0, 10, by = 2)
-xi_values <- xi_values[-1]
-xi_big <- 10000
-
-data_table <- def_poi_X
-data_pert_table <- def_poi_X_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- poisson
-type <- "deviance"
-
-# nobs <- 300
-# rep <- 1
-# data_table <- def_poi_X
-# data_pert_table <- def_poi_X_pert
-
-# Simulate
-sim_data_poi_X_fivi_list <- simulate_fivi_list(nsim = nsim, nobs = 300,
-                                               xi_values = xi_values, xi_big = xi_big,
-                                               data_table = data_table,
-                                               data_pert_table = data_pert_table, 
-                                               formula = formula, A_formula = A_formula,
-                                               family = family, type = type) 
-
-# data_poi_X_states_fivi_list <- sim_data_poi_X_fivi_list$states
-# data_poi_X_fivi_list <- sim_data_poi_X_fivi_list$sim_data
-
-path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/sim3/"
-dir.create(paste(path_name, Sys.Date(), sep = ""))
-save(sim_data_poi_X_fivi_list, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim_data_poi_X_fivi_list.Rdata", sep =""))
-
-# Initialize for fixed xi
-set.seed(33524)
-
-xi <- 1
-xi_big <- 10000
-v_values <- seq(-5, 5, by = 1)
-
-data_table <- def_poi_X
-data_pert_table <- def_poi_X_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- poisson
-type <- "deviance"
-
-# Simulate
-sim_data_poi_X_fixi <- simulate_fixi(nobs = 300,
-                                     xi_values = xi, xi_big = xi_big,
-                                     v_values = v_values, 
-                                     data_table = data_table,
-                                     data_pert_table = data_pert_table, 
-                                     formula = formula, A_formula = A_formula,
-                                     family = family, type = type,
-                                     quant_value = 0.9)
-
-data_poi_X_fixi <- sim_data_poi_X_fixi$sim_data
-
-# Store states and data
-path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/sim3/sim3_fixi_data"
-write.table(data_poi_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = "_"), ".csv", sep =""))
-
-
-# -----------------------------------------------------------------------------
-# Ausprobier section: Poisson IV setting performance for fixed xi ----------------------
-
-# Define variables for unperturbed and perturbed data set
-def_poi_X <- defData(varname = "A", dist = "normal", 
-                     formula = 0, variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "H", dist = "normal",
-                     formula = 0, variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "X", dist = "normal", 
-                     formula = "1.2 * H + A", variance = 0.25)
-def_poi_X <- defData(def_poi_X, varname = "Y", dist = "poisson", link = "log", 
-                     formula = "0.4 * X + 0.5 * H", variance = 1)
-
-def_poi_IV_pert <- defData(varname = "A", dist = "normal", 
-                           formula = 0, variance = 0.25)
-def_poi_IV_pert <- defData(def_poi_IV_pert, varname = "v", 
-                           formula = 4) # set perturbation strength
-def_poi_IV_pert <- defData(def_poi_IV_pert, varname = "H", dist = "normal",
-                           formula = 0, variance = 0.25)
-def_poi_IV_pert <- defData(def_poi_IV_pert, varname = "X", dist = "normal", 
-                           formula = "1.2 * H + v * A", variance = 0.25)
-def_poi_IV_pert <- defData(def_poi_IV_pert, varname = "Y", dist = "poisson",
-                           formula = "0.4 * X + 0.5 * H", link = "log")
-
-causal_parameter <- 0.4
-
-# Initialize for fixed xi
-set.seed(7562)
-
-xi_values <- c(1, 50)
-xi_big <- 10000
-v_values <- seq(0, 20, by = 1)
-
-data_table <- def_poi_IV
-data_pert_table <- def_poi_IV_pert 
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "poisson"
-type <- "deviance"
-
-# Simulate
-sim_data_poi_IV_fixi <- simulate_fixi(nobs = 300,
-                                      xi_values = xi_values, xi_big = xi_big,
-                                      v_values = v_values, 
-                                      data_table = data_table,
-                                      data_pert_table = data_pert_table, 
-                                      formula = formula, A_formula = A_formula,
-                                      family = family, type = type,
-                                      quant_value = 0.9)
-
-data_poi_IV_fixi <- sim_data_poi_IV_fixi$sim_data
-
-
-plot_fixi(data_poi_IV_fixi)

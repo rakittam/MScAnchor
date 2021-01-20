@@ -1,11 +1,10 @@
 # Run simulation analysis and plots
 #
-# Date: 19.01.21     Author: Maic Rakitta
+# Date: 14.01.21     Author: Maic Rakitta
 ###############################################################################
 
 # -----------------------------------------------------------------------------
 ### Example Data Analysis
-
 # ex1: Rothenhaeusler example -------------------------------------------------
 
 # sim1: Rothenhaeusler Comparison ---
@@ -41,20 +40,23 @@ load(
   "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/2021-01-15/sim3.Rdata")
 
 # Compute data
-data_rot_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
-colnames(data_rot_X_fixi) <- c("rep", "v", "xi",
-                               "b", "se", "logLik_pert", "deviance", "pearson")
-for (i in 1:nsim) {
+v_len <- length(sim_data_rot_X_fixi)
+
+data_rot_X_fixi <- data.frame(matrix(nrow = 0, ncol = 7))
+colnames(data_rot_X_fixi) <- c("v", "xi",
+                        "b", "se", "logLik_pert", "deviance", "pearson")
+for (i in 1:v_len) {
+  
+  v <- sim_data_rot_X_fixi[[i]][["v_value"]]
   
   data_temp <- sim_data_rot_X_fixi[[i]][["data"]][["data"]]
   
-  data_rot_X_fixi <- rbind(data_rot_X_fixi, data_temp)
+  data_rot_X_fixi <- rbind(data_rot_X_fixi, data.frame(v = v, data_temp))
 }
 
 head(data_rot_X_fixi)
 summary(data_rot_X_fixi)
 
-# Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_rot_X_fixi)
 
 # ex2: Poisson with IV example ------------------------------------------------
@@ -77,23 +79,29 @@ plot_fivi_X(data_poi_X_fivi)
 load(
   "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/2021-01-18/sim2.Rdata")
 
-
 # Compute data
-data_poi_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
-colnames(data_poi_X_fixi) <- c("rep", "v", "xi",
+v_len <- length(sim_data_poi_X_fixi)
+
+data_poi_X_fixi <- data.frame(matrix(nrow = 0, ncol = 7))
+colnames(data_poi_X_fixi) <- c("v", "xi",
                                "b", "se", "logLik_pert", "deviance", "pearson")
-for (i in 1:nsim) {
+for (i in 1:v_len) {
+  
+  v <- sim_data_poi_X_fixi[[i]][["v_value"]]
   
   data_temp <- sim_data_poi_X_fixi[[i]][["data"]][["data"]]
   
-  data_poi_X_fixi <- rbind(data_poi_X_fixi, data_temp)
+  data_poi_X_fixi <- rbind(data_poi_X_fixi, data.frame(v = v, data_temp))
 }
 
 head(data_poi_X_fixi)
 summary(data_poi_X_fixi)
 
-# Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_poi_X_fixi)
+
+# Plot pearson and deviance
+plot_deviance(data_poi_X_fixi)
+plot_pearson(data_poi_X_fixi)
 
 
 # sim3: Poisson IV identifiability ---
@@ -126,21 +134,28 @@ load(
   "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/2021-01-18/sim2.Rdata")
 
 # Compute data
-data_bin_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
-colnames(data_bin_X_fixi) <- c("rep", "v", "xi",
+v_len <- length(sim_data_bin_X_fixi)
+
+data_bin_X_fixi <- data.frame(matrix(nrow = 0, ncol = 7))
+colnames(data_bin_X_fixi) <- c("v", "xi",
                                "b", "se", "logLik_pert", "deviance", "pearson")
-for (i in 1:nsim) {
+for (i in 1:v_len) {
+  
+  v <- sim_data_bin_X_fixi[[i]][["v_value"]]
   
   data_temp <- sim_data_bin_X_fixi[[i]][["data"]][["data"]]
   
-  data_bin_X_fixi <- rbind(data_bin_X_fixi, data_temp)
+  data_bin_X_fixi <- rbind(data_bin_X_fixi, data.frame(v = v, data_temp))
 }
 
 head(data_bin_X_fixi)
 summary(data_bin_X_fixi)
 
-# Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_bin_X_fixi)
+
+# Plot pearson and deviance
+plot_deviance(data_bin_X_fixi)
+plot_pearson(data_bin_X_fixi)
 
 # sim3: Binomial IV identifiability ---
 
@@ -149,6 +164,7 @@ load(
 
 IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = 1)
+
 
 # ex4: Poisson with Anchor on X, H and Y --------------------------------------
 
@@ -165,4 +181,22 @@ summary(data_poi_XHY_fivi)
 
 plot_fivi_XHY(data_poi_XHY_fivi)
 
+
+
+# -----------------------------------------------------------------------------
+# QUANTILE SACHEN: ------------------------------------------------------------
+# Several quantiles
+load("C:/Users/maicr/Desktop/Github/MScAnchor/data sets/sim3/2020-12-24/sim_data_poi_X_fivi_list.Rdata")
+
+data_poi_X_fivi_list <- sim_data_poi_X_fivi_list$sim_data
+
+str(data_poi_X_fivi_list)
+
+# data_poi_X_fivi_list[[1]] # logLiks and coefs storage
+# data_poi_X_fivi_list[[1]][[2]] # logLiks of iteration 1
+# 
+# data_poi_X_fivi_list[[1]][[2]][, 1] # first column is used xi vector
+
+q_values <- seq(0, 1, by = 0.01)
+plot_fivi_quantiles(data_poi_X_fivi_list, q_values, xi_big = 10000)
 
