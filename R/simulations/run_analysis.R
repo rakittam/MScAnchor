@@ -95,6 +95,42 @@ summary(data_poi_X_fixi)
 # Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_poi_X_fixi)
 
+# Investigate different quantiles
+
+alpha <- 0.9
+
+quantile_data <- data.frame(matrix(nrow = 0, ncol = 6))
+colnames(quantile_data) <- c("rep", "v", "xi", "logLik_pert", "deviance", "pearson")
+
+for (i in 1:nsim) {
+  
+  data_temp <- sim_data_poi_X_fixi[[i]][["data"]][["indv"]]
+  
+  vlen <- length(data_temp)
+  
+  for (s in 1:vlen) {
+    
+    # Log-Likelihood
+    logLik <- apply(data_temp[[s]][[1]], 1, function(x) quantile(x, probs = alpha))
+
+    # Deviance Residuals
+    deviance <- apply(data_temp[[s]][[2]], 1, function(x) quantile(x, probs = alpha))
+    
+    # Pearson Residuals
+    pearson <- apply(data_temp[[s]][[3]], 1, function(x) quantile(x, probs = alpha))
+
+    temp <- data.frame(rep = i, v = data_temp[[s]][[5]], xi = data_temp[[s]][[4]],
+                       logLik_pert = logLik, deviance = deviance, pearson = pearson)
+    
+    quantile_data <- rbind(quantile_data, temp)
+  }
+  
+  data_temp$logLik
+  
+  data_poi_X_fixi <- rbind(data_poi_X_fixi, data_temp)
+}
+
+plot_fixi(quantile_data)
 
 # sim3: Poisson IV identifiability ---
 

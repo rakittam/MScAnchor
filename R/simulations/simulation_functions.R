@@ -395,6 +395,7 @@ onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table,
   v_len <- length(v_values)
   
   data_frame <- data.frame()
+  indv_list <- list()
   
   for (s in 1:v_len) {
     data_pert_table_temp <- updateDef(data_pert_table,
@@ -496,12 +497,12 @@ onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table,
                                   pearson = pearson)
     
     data_frame <- rbind(data_frame, data_frame_temp)
+    
+    indv_list[[s]] <- list(logLik_pert_indiv, devres, peares, xi_values, v = v_values[s])
   }
   
   list(data = data_frame,
-       logLik = logLik_pert_indiv,
-       devres = devres,
-       peares = peares)
+       indv = indv_list)
 }
 
 
@@ -811,7 +812,7 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 300,
 
 start_seed <- 96574
 
-nsim <- 100
+nsim <- 10
 
 xi_values <- c(0, 1, 50, 10000)
 v_values <- seq(-10, 10, by = 1)
