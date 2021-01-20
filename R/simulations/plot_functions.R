@@ -3,11 +3,9 @@
 # Date: 19.12.20     Author: Maic Rakitta
 ###############################################################################
 
-#library(extrafont)
 library(tidyverse)
 library(rsimsum)
 library(ggplot2)
-# library(gridExtra)
 library(reshape2)
 library(ggpubr) # for theme and ggarrange
 theme_set(theme_bw())
