@@ -362,6 +362,17 @@ plot_fixi <- function(sim_data) {
   #                  font.label = list(face = "plain"))
   # 
   # ggsave(filename = "ex2sim2_RMSE.pdf", plot = arr2, height = 5, width = 5)
+  
+  # # Plots for LaTeX Ex5
+  # arr <- ggarrange(gg1, 
+  #                  gg3,
+  #                  gg5,
+  #                  labels = c("A", "B", "C"),
+  #                  ncol = 1, nrow = 3, common.legend = TRUE, legend="right",
+  #                  font.label = list(face = "plain"))
+  # 
+  # ggsave(filename = "ex5sim2.pdf", plot = arr, height = 7, width = 5)
+  
 }
 
 # Plot IV function ------------------------------------------------------------
@@ -736,6 +747,34 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   # 
   # ggsave(filename = "ex4sim4.1.pdf", plot = alpax, height = 4, width = 6)
   # ggsave(filename = "ex4sim4.2.pdf", plot = gg2, height = 4, width = 6)
+  # 
+  # print(alpax)
+  # print(gg2)
+  
+  # # Example 5
+  # g1 <- ggplotGrob(gg3 +
+  #                    theme(legend.position = "none") +
+  #                    labs(x=element_blank(), y=element_blank()))
+  # alpax <- gg1+
+  #   annotation_custom(
+  #     grob = g1,
+  #     xmin = 0.465,
+  #     xmax = 1.05,
+  #     ymin = -1.13,
+  #     ymax = -0.65
+  #   )
+  # alpax
+  # 
+  # arr <- ggarrange(alpax, gg2,
+  #                  labels = c("A", "B"),
+  #                  ncol = 1, nrow = 2,
+  #                  font.label = list(face = "plain"))
+  # 
+  # # Plots for LaTeX
+  # ggsave(filename = "ex5sim4.pdf", plot = arr, height = 4, width = 6)
+  # 
+  # ggsave(filename = "ex5sim4.1.pdf", plot = alpax, height = 4, width = 6)
+  # ggsave(filename = "ex5sim4.2.pdf", plot = gg2, height = 4, width = 6)
   # 
   # print(alpax)
   # print(gg2)

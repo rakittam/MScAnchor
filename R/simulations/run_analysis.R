@@ -12,7 +12,7 @@ library(simstudy)
 # -----------------------------------------------------------------------------
 ### Example Data Analysis
 
-# ex1: Rothenhaeusler example -------------------------------------------------
+# ex1: Rothenhaeusler Example -------------------------------------------------
 
 # sim1: Rothenhaeusler Comparison ---
 
@@ -63,7 +63,7 @@ summary(data_rot_X_fixi)
 # Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_rot_X_fixi)
 
-# ex2: Poisson with IV example ------------------------------------------------
+# ex2: Poisson with IV Example ------------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
 def_poi_X <- defData(varname = "A", dist = "normal", 
@@ -89,8 +89,8 @@ def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link 
 # Parameters of linear predictor
 b <- 0.4
 h <- 1
-
-# sim0: General ---
+a <- 0
+a_pert <- 3
 
 # sim0: General ---
 
@@ -251,7 +251,7 @@ plot_quant(data_poi_X_quant, q_values, xi_big = 10000)
 
 
 
-# ex3: Binomial with IV example -----------------------------------------------
+# ex3: Binomial with IV Example -----------------------------------------------
 
 # sim1: Binomial IV with fixed v ---
 
@@ -408,4 +408,55 @@ str(data_poi_XHY_quant)
 
 q_values <- seq(0, 1, by = 0.01)
 plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
+
+
+# ex5: Label Noise Example ----------------------------------------------------
+
+# sim1: Label Noise with fixed v ---
+
+load(
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim1.Rdata")
+
+data_LN_states_fivi <- sim_data_LN_fivi$states
+data_LN_fivi <- sim_data_LN_fivi$sim_data
+
+head(data_LN_fivi)
+summary(data_LN_fivi)
+
+plot_fivi_X(data_LN_fivi)
+
+# sim2: Label Noise with fixed xi ---
+
+load(
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim2.Rdata")
+
+# Compute data
+data_LN_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
+colnames(data_LN_fixi) <- c("rep", "v", "xi",
+                               "b", "se", "logLik_pert", "deviance", "pearson")
+for (i in 1:nsim) {
+  
+  data_temp <- sim_data_LN_fixi[[i]][["data"]][["data"]]
+  
+  data_LN_fixi <- rbind(data_LN_fixi, data_temp)
+}
+
+head(data_LN_fixi)
+summary(data_LN_fixi)
+
+# Plot Quantile of log-likelihood and with residuals
+plot_fixi(data_LN_fixi)
+
+# sim4: Label Noise several quantiles ---
+
+load(
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim4.Rdata")
+
+data_LN_quant <- sim_data_LN_quant$sim_data
+
+head(data_LN_quant)
+str(data_LN_quant)
+
+q_values <- seq(0, 1, by = 0.01)
+plot_quant(data_LN_quant, q_values, xi_big = 10000)
 
