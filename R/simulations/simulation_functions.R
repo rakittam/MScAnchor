@@ -1068,7 +1068,7 @@ start_seed <- 19336
 
 nsim <- 100
 
-xi_values <- c(0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25,2.5,2.75, 3, 5, 8, 10, 20, 50, 10000)
+xi_values <- c(0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 10000)
 v_values <- seq(-10, 20, by = 0.1)
 
 # Simulate
@@ -1324,13 +1324,13 @@ type <- "deviance"
 
 set.seed(665401)
 
-nsim <- 10
+nsim <- 100
 
 xi_values <- seq(0, 10, by = 0.1)
 xi_values <- c(xi_values, 10000)
 
 # Simulate
-sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 100,
+sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                   xi_values = xi_values,
                                   data_table = data_table,
                                   data_pert_table = data_pert_table, 

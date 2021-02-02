@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 data\ sets/
+*.pdf
+*.Rdata
+*.png
