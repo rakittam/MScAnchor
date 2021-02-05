@@ -415,7 +415,7 @@ plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 # sim1: Label Noise with fixed v ---
 
 load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim1.Rdata")
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim1.Rdata")
 
 data_LN_states_fivi <- sim_data_LN_fivi$states
 data_LN_fivi <- sim_data_LN_fivi$sim_data
@@ -428,7 +428,7 @@ plot_fivi_X(data_LN_fivi)
 # sim2: Label Noise with fixed xi ---
 
 load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim2.Rdata")
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim2.Rdata")
 
 # Compute data
 data_LN_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
@@ -450,7 +450,7 @@ plot_fixi(data_LN_fixi)
 # sim4: Label Noise several quantiles ---
 
 load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-01-29/sim4.Rdata")
+  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim4.Rdata")
 
 data_LN_quant <- sim_data_LN_quant$sim_data
 

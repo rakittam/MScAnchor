@@ -1338,14 +1338,6 @@ sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                   family = family, type = type,
                                   quant_value = 0.9) 
 
-data_LN_states_fivi <- sim_data_LN_fivi$states
-data_LN_fivi <- sim_data_LN_fivi$sim_data
-
-head(data_LN_fivi)
-summary(data_LN_fivi)
-
-plot_fivi_X(data_LN_fivi)
-
 # # Save simulated data list
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
@@ -1355,13 +1347,13 @@ plot_fivi_X(data_LN_fivi)
 
 start_seed <- 78957
 
-nsim <- 10
+nsim <- 100
 
 xi_values <- c(0, 1, 3, 5, 8, 10, 20, 50, 10000)
-v_values <- seq(-10, 10, by = 1)
+v_values <- seq(-10, 10, by = 0.1)
 
 # Simulate
-sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 100,
+sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                   xi_values = xi_values,
                                   v_values = v_values, 
                                   data_table = data_table,
@@ -1381,28 +1373,19 @@ sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 100,
 
 set.seed(16541)
 
-nsim <- 10
+nsim <- 100
 
-xi_values <- seq(0, 10, by = 1)
+xi_values <- seq(0, 10, by = 0.1)
 xi_values <- xi_values[-1]
 xi_big <- 10000
 
 # Simulate
-sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 100,
+sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                          xi_values = xi_values, xi_big = xi_big,
                                          data_table = data_table,
                                          data_pert_table = data_pert_table, 
                                          formula = formula, A_formula = A_formula,
                                          family = family, type = type) 
-
-data_LN_quant <- sim_data_LN_quant$sim_data
-
-head(data_LN_quant)
-str(data_LN_quant)
-
-q_values <- seq(0, 1, by = 0.01)
-plot_quant(data_LN_quant, q_values, xi_big = 10000)
-
 
 # # Save data
 # path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"

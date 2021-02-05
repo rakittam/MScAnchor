@@ -757,11 +757,11 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   #                    labs(x=element_blank(), y=element_blank()))
   # alpax <- gg1+
   #   annotation_custom(
-  #     grob = g1,
-  #     xmin = 0.465,
-  #     xmax = 1.05,
-  #     ymin = -1.13,
-  #     ymax = -0.65
+  # grob = g1,
+  # xmin = 0.45,
+  # xmax = 1.05,
+  # ymin = -1.82,
+  # ymax = -0.5
   #   )
   # alpax
   # 
