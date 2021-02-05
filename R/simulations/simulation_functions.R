@@ -792,7 +792,7 @@ sim_data_rot <- simulate_rot(nsim = nsim, nobs = 1000,
                              family = family)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/"
+# path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_rot, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -815,7 +815,7 @@ sim_data_rot_X_fivi <- simulate_rot_fivi(nsim = nsim, nobs = 1000,
                                          quant_value = 0.9) 
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/"
+# path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_rot_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
@@ -839,7 +839,7 @@ sim_data_rot_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                      quant_value = 0.9, start_seed = start_seed)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/"
+# path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_rot_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
@@ -906,7 +906,7 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                      quant_value = 0.9) 
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
+# path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -930,7 +930,7 @@ sim_data_poi_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                      quant_value = 0.9, start_seed = start_seed)
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
+# path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
@@ -956,7 +956,7 @@ IV_b_poi <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
                         family = family, type = type)
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
+# path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(IV_b_poi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
@@ -979,7 +979,7 @@ sim_data_poi_X_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                             family = family, type = type) 
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/"
+# path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_X_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 
@@ -1058,7 +1058,7 @@ sim_data_bin_X_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
 
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/"
+# path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_bin_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -1082,7 +1082,7 @@ sim_data_bin_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                      quant_value = 0.9, start_seed)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/"
+# path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_bin_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
@@ -1112,7 +1112,7 @@ IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = b)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/"
+# path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(IV_b_bin, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
 
@@ -1205,7 +1205,7 @@ sim_data_poi_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 100,
                                        quant_value = 0.9)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/"
+# path_name <- "./data sets/simulation_study/ex4/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -1239,7 +1239,7 @@ sim_data_poi_XHY_quant <- simulate_fivi_quant(nsim = nsim, nobs = 100,
                                             family = family, type = type) 
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/"
+# path_name <- "./data sets/simulation_study/ex4/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_poi_XHY_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 
@@ -1339,7 +1339,7 @@ sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                   quant_value = 0.9) 
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
+# path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -1363,7 +1363,7 @@ sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
                                   quant_value = 0.9, start_seed)
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
+# path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
@@ -1388,7 +1388,7 @@ sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                          family = family, type = type) 
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
+# path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 
@@ -1481,7 +1481,7 @@ sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 100,
 
 
 # # Save simulated data list
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
+# path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
@@ -1504,6 +1504,6 @@ sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 100,
                                          family = family, type = type) 
 
 # # Save data
-# path_name <- "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/"
+# path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))

@@ -16,8 +16,7 @@ library(simstudy)
 
 # sim1: Rothenhaeusler Comparison ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/2021-01-27/sim1.Rdata")
+load("./data sets/simulation_study/ex1/2021-01-27/sim1.Rdata")
 
 data_rot_states <- sim_data_rot$states
 data_rot <- sim_data_rot$sim_data
@@ -30,8 +29,7 @@ plot_rot(data_rot)
 
 # sim2: Rothenhaeusler with fixed v ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/2021-01-27/sim2.Rdata")
+load("./data sets/simulation_study/ex1/2021-01-27/sim2.Rdata")
 
 data_rot_X_fivi_states <- sim_data_rot_X_fivi$states
 data_rot_X_fivi <- sim_data_rot_X_fivi$sim_data
@@ -43,8 +41,7 @@ plot_rot_fivi(data_rot_X_fivi)
 
 # sim3: Rothenhaeusler with fixed xi ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex1/2021-01-27/sim3.Rdata")
+load("./data sets/simulation_study/ex1/2021-01-27/sim3.Rdata")
 
 # Compute data
 data_rot_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
@@ -146,8 +143,7 @@ arr
 
 # sim1: Poisson IV with fixed v ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/2021-01-27/sim1.Rdata")
+load("./data sets/simulation_study/ex2/2021-01-27/sim1.Rdata")
 
 data_poi_X_states_fivi <- sim_data_poi_X_fivi$states
 data_poi_X_fivi <- sim_data_poi_X_fivi$sim_data
@@ -159,8 +155,7 @@ plot_fivi_X(data_poi_X_fivi)
 
 # sim2: Poisson IV with fixed xi ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/2021-01-27/sim2.Rdata")
+load("./data sets/simulation_study/ex2/2021-01-27/sim2.Rdata")
 
 
 # Compute data
@@ -230,16 +225,14 @@ plot_fixi(quantile_data_chosen)
 
 # sim3: Poisson IV identifiability ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/2021-01-27/sim3.Rdata")
+load("./data sets/simulation_study/ex2/2021-01-27/sim3.Rdata")
 
 IV_b_data <- IV_b_poi$sim_data
 plot_IV(IV_b_data, causal_parameter = 0.4)
 
 # sim4: Poisson IV several quantiles ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex2/2021-01-27/sim4.Rdata")
+load("./data sets/simulation_study/ex2/2021-01-27/sim4.Rdata")
 
 data_poi_X_quant <- sim_data_poi_X_quant$sim_data
 
@@ -255,8 +248,7 @@ plot_quant(data_poi_X_quant, q_values, xi_big = 10000)
 
 # sim1: Binomial IV with fixed v ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/2021-01-18/sim1.Rdata")
+load("./data sets/simulation_study/ex3/2021-01-18/sim1.Rdata")
 
 data_bin_X_states_fivi <- sim_data_bin_X_fivi$states
 data_bin_X_fivi <- sim_data_bin_X_fivi$sim_data
@@ -268,8 +260,7 @@ plot_fivi_X(data_bin_X_fivi)
 
 # sim2: Binomial IV with fixed xi ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/2021-01-18/sim2.Rdata")
+load("./data sets/simulation_study/ex3/2021-01-18/sim2.Rdata")
 
 # Compute data
 data_bin_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
@@ -290,8 +281,7 @@ plot_fixi(data_bin_X_fixi)
 
 # sim3: Binomial IV identifiability ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex3/2021-01-18/sim3.Rdata")
+load("./data sets/simulation_study/ex3/2021-01-18/sim3.Rdata")
 
 IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = 1)
@@ -386,8 +376,7 @@ arr
 
 # sim1: Poisson with Anchor on X, H and Y fixed v ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/2021-01-27/sim1.Rdata")
+load("./data sets/simulation_study/ex4/2021-01-27/sim1.Rdata")
 
 data_poi_XHY_fivi_states <- sim_data_poi_XHY_fivi$states
 data_poi_XHY_fivi <- sim_data_poi_XHY_fivi$sim_data
@@ -399,7 +388,7 @@ plot_fivi_XHY(data_poi_XHY_fivi)
 
 # sim4: Poisson IV several quantiles ---
 
-load("C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex4/2021-01-27/sim4.Rdata")
+load("./data sets/simulation_study/ex4/2021-01-27/sim4.Rdata")
 
 data_poi_XHY_quant <- sim_data_poi_XHY_quant$sim_data
 
@@ -414,8 +403,7 @@ plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 
 # sim1: Label Noise with fixed v ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim1.Rdata")
+load("./data sets/simulation_study/ex5/2021-02-03/sim1.Rdata")
 
 data_LN_states_fivi <- sim_data_LN_fivi$states
 data_LN_fivi <- sim_data_LN_fivi$sim_data
@@ -427,8 +415,7 @@ plot_fivi_X(data_LN_fivi)
 
 # sim2: Label Noise with fixed xi ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim2.Rdata")
+load("./data sets/simulation_study/ex5/2021-02-03/sim2.Rdata")
 
 # Compute data
 data_LN_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
@@ -449,8 +436,7 @@ plot_fixi(data_LN_fixi)
 
 # sim4: Label Noise several quantiles ---
 
-load(
-  "C:/Users/maicr/Desktop/Github/MScAnchor/data sets/simulation_study/ex5/2021-02-03/sim4.Rdata")
+load("./data sets/simulation_study/ex5/2021-02-03/sim4.Rdata")
 
 data_LN_quant <- sim_data_LN_quant$sim_data
 
