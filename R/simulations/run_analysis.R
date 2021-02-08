@@ -434,6 +434,26 @@ summary(data_LN_fixi)
 # Plot Quantile of log-likelihood and with residuals
 plot_fixi(data_LN_fixi)
 
+# Plot with glm(Y~X+A-1)
+data_LN_fixi_glm <- data.frame(matrix(nrow = 0, ncol = 8))
+colnames(data_LN_fixi_glm) <- c("rep", "v", "xi",
+                            "b", "se", "logLik_pert", "deviance", "pearson")
+for (i in 1:nsim) {
+  
+  data_temp <- sim_data_LN_fixi_glm[[i]][["data"]][["data"]]
+  
+  data_LN_fixi_glm <- rbind(data_LN_fixi_glm, data_temp)
+}
+
+head(data_LN_fixi_glm)
+summary(data_LN_fixi_glm)
+
+data_LN_fixi_glm$xi <- "glm"
+
+data_LN_fixi_all <- rbind(data_LN_fixi_glm, data_LN_fixi)
+
+plot_fixi(data_LN_fixi_all)
+
 # sim4: Label Noise several quantiles ---
 
 load("./data sets/simulation_study/ex5/2021-02-03/sim4.Rdata")
