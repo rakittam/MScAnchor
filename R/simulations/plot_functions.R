@@ -255,7 +255,9 @@ plot_fixi <- function(sim_data) {
               mean_pea = mean(pearson))
   
   gg_data <- mean_data
-  gg_data$xi_val <- as.factor(mean_data$xi) 
+  gg_data$xi_val <- as.factor(mean_data$xi)
+  # gg_data$xi_val <- factor(mean_data$xi, levels = c("glm", "0", "1", "3", "5",
+  #                                                   "8", "10", "20", "50", "10000")) 
   
   gg1 <- ggplot(gg_data, aes(y = mean_logLik_pert, x = v, color = xi_val, group = xi_val)) +
     

@@ -1367,6 +1367,21 @@ sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
 
+sim_data_LN_fixi_glm <- simulate_fixi(nsim = nsim, nobs = 1000,
+                                      xi_values = 0,
+                                      v_values = v_values, 
+                                      data_table = data_table,
+                                      data_pert_table = data_pert_table, 
+                                      formula = Y ~ X + A - 1,
+                                      A_formula = A_formula,
+                                      family = family, type = type,
+                                      quant_value = 0.9, start_seed)
+
+# # Save simulated data list
+# path_name <- "./data sets/simulation_study/ex5/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_LN_fixi_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2_glm.Rdata", sep =""))
+
 
 
 # sim4: Label Noise several quantiles ---
@@ -1507,3 +1522,227 @@ sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 100,
 # path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
+
+
+
+
+
+# Function definition for fixed xi for glm with A -----------------------------
+
+onerep_fixi_LN <- function(rep, nobs = 300, data_table, data_pert_table, 
+                           formula, A_formula, xi_values, v_values,
+                           family, type, quant_value = 0.9, rep_seed) {
+  
+  v_len <- length(v_values)
+  
+  data_frame <- data.frame()
+  indv_list <- list()
+  
+  b_glm <- matrix(nrow = v_len)
+  b_se_glm <- matrix(nrow = v_len)
+  
+  logLik_glm_pert_indiv <- matrix(nrow = v_len, ncol = nobs)
+  logLik_glm_pert <- matrix(nrow = v_len, ncol = 1)
+  
+  devres_glm <- matrix(nrow = v_len, ncol = nobs)
+  deviance_glm <- matrix(nrow = v_len, ncol = 1)
+  
+  peares_glm <- matrix(nrow = v_len, ncol = nobs)
+  pearson_glm <- matrix(nrow = v_len, ncol = 1)
+  
+  for (s in 1:v_len) {
+    data_pert_table_temp <- updateDef(data_pert_table,
+                                      changevar = "v",
+                                      newformula = v_values[s])
+    
+    # Generate data with nobs observations
+    set.seed(rep_seed) # use the same seeds for each v to use same errors
+    dd <- genData(nobs, data_table)
+    set.seed(rep_seed + 200)
+    dd_pert <- genData(nobs, data_pert_table_temp)
+    
+    # FIT GLM with A
+    fit_glm <- glm(formula = Y ~ X + A - 1,
+                   data = dd, family = family)
+    b_glm[s] <- as.numeric(coef(fit_glm))
+    b_se_glm[s] <- fit_glm$coef_se
+    
+    logLik_glm_pert_indiv[j, ] <- logLik(fit, newdata = dd_pert, indiv = TRUE)
+    logLik_glm_pert[j] <- as.numeric(quantile(logLik_pert_indiv[j, ], quant_value))
+    
+    if(family == "poisson") {
+      
+      link_inv <- poisson()$linkinv
+      vari <- poisson()$variance
+      mu <- link_inv(dd_pert$X * b[j])
+      
+      r <- mu
+      p <- which(dd_pert$Y > 0)
+      r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
+      
+      devres[j, ] <- sign(dd_pert$Y - mu) * sqrt(2 * r)
+      
+    } else if(family == "binomial") {
+      
+      link_inv <- binomial()$linkinv
+      vari <- binomial()$variance
+      mu <- link_inv(dd_pert$X * b[j])
+      
+      r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
+        log((1 - dd_pert$Y) / (1 - mu))
+      p <- which(dd_pert$Y == 0)
+      r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
+      q <- which(dd_pert$Y == 1)
+      r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
+      
+      devres[j, ] <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
+      
+    } else if(family == "gaussian"){
+      
+      link_inv <- gaussian()$linkinv
+      vari <- gaussian()$variance
+      mu <- link_inv(dd_pert$X * b[j])
+      
+      n <- length(dd_pert$Y)
+      s_hat <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
+      
+      devres[j, ] <- 1 / s_hat * (dd_pert$Y - mu)
+      
+    } else {
+      stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
+    }
+    
+    
+    
+    
+    
+    
+    
+    # Fit glares
+    xi_len <- length(xi_values)
+    b <- matrix(nrow = xi_len, ncol = 1)
+    b_se <- matrix(nrow = xi_len, ncol = 1)
+    logLik_pert_indiv <- matrix(nrow = xi_len, ncol = nobs)
+    logLik_pert <- matrix(nrow = xi_len, ncol = 1)
+    
+    devres <- matrix(nrow = xi_len, ncol = nobs)
+    deviance <- matrix(nrow = xi_len, ncol = 1)
+    
+    peares <- matrix(nrow = xi_len, ncol = nobs)
+    pearson <- matrix(nrow = xi_len, ncol = 1)
+    
+    for (j in 1:xi_len) {
+      xi <- xi_values[j]
+      
+      fit <- glare(formula = formula,
+                   A_formula = A_formula,
+                   data = dd,
+                   xi = xi,
+                   family = family,
+                   type = type)
+      
+      b[j] <- as.numeric(coef(fit))
+      b_se[j] <- fit$coef_se
+      
+      logLik_pert_indiv[j, ] <- logLik(fit, newdata = dd_pert, indiv = TRUE)
+      logLik_pert[j] <- as.numeric(quantile(logLik_pert_indiv[j, ], quant_value))
+      
+      if(family == "poisson") {
+        
+        link_inv <- poisson()$linkinv
+        vari <- poisson()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        r <- mu
+        p <- which(dd_pert$Y > 0)
+        r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
+        
+        devres[j, ] <- sign(dd_pert$Y - mu) * sqrt(2 * r)
+        
+      } else if(family == "binomial") {
+        
+        link_inv <- binomial()$linkinv
+        vari <- binomial()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
+          log((1 - dd_pert$Y) / (1 - mu))
+        p <- which(dd_pert$Y == 0)
+        r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
+        q <- which(dd_pert$Y == 1)
+        r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
+        
+        devres[j, ] <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
+        
+      } else if(family == "gaussian"){
+        
+        link_inv <- gaussian()$linkinv
+        vari <- gaussian()$variance
+        mu <- link_inv(dd_pert$X * b[j])
+        
+        n <- length(dd_pert$Y)
+        s_hat <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
+        
+        devres[j, ] <- 1 / s_hat * (dd_pert$Y - mu)
+        
+      } else {
+        stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
+      }
+      
+      # Deviance
+      deviance[j] <- sqrt(mean(devres[j, ]^2))
+      
+      # Pearson
+      V <- vari(mu)
+      peares[j, ] <- (dd_pert$Y - mu)/sqrt(V)
+      pearson[j] <-  sqrt(mean(peares[j, ]^2))
+    }
+    
+    # Return
+    data_frame_temp <- data.frame(rep = rep, v = v_values[s], xi = xi_values,
+                                  b = b,
+                                  se = b_se,
+                                  logLik_pert = logLik_pert,
+                                  deviance = deviance,
+                                  pearson = pearson)
+    
+    data_frame <- rbind(data_frame, data_frame_temp)
+    
+    indv_list[[s]] <- list(logLik_pert_indiv, devres, peares, xi_values, v = v_values[s])
+  }
+  
+  list(data = data_frame,
+       indv = indv_list)
+}
+
+
+# Define simulation function
+simulate_fixi_LN <- function(nsim = 100, nobs = 300, xi_values, v_values, 
+                             data_table, data_pert_table, 
+                             formula, A_formula, family, type,
+                             quant_value = 0.9, start_seed) {
+  
+  data_list <- list()
+  
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
+  for (r in 1:nsim) {
+    
+    data_temp <-
+      onerep_fixi_LN(rep = r, nobs = nobs,
+                     data_table = data_table,
+                     data_pert_table = data_pert_table, 
+                     formula = formula, A_formula = A_formula,
+                     xi_values = xi_values, v_values = v_values,
+                     family = family, type = type,
+                     quant_value = quant_value, rep_seed = r + start_seed)
+    
+    data_list[[r]] <- list(rep = r,
+                           data = data_temp)
+    
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb, r)
+  }
+  close(pb)
+  
+  data_list
+}
