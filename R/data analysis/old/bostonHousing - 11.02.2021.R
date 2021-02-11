@@ -13,25 +13,8 @@ theme_set(theme_bw())
 
 # Load data
 data("BostonHousing2")
-
-# standartize covariates and normalize response
-std_covariates <- scale(BostonHousing2[, c("crim", "zn", "indus", "nox",
-                                 "rm", "age", "lstat")])
-nor_response <- (BostonHousing2[, "cmedv"] - min(BostonHousing2[, "cmedv"])) /
-  (max(BostonHousing2[, "cmedv"]) - min(BostonHousing2[, "cmedv"]))
-
-df_temp <- data.frame(cmedv = nor_response, town = BostonHousing2[, "town"])
-
-bostonPrices <- data.frame(std_covariates[, c("crim", "zn", "indus", "nox",
-                                              "rm", "age", "lstat")])
-bostonPrices <- cbind(df_temp, bostonPrices)
-
-# Create shortcuts for towns
-names.arg <- levels(bostonPrices$town)
-town_lookup_table <- abbreviate(names.arg, minlength = 2, use.classes = TRUE,
-                                dot = FALSE, strict = FALSE,
-                                method = c("left.kept", "both.sides"), named = TRUE)
-levels(bostonPrices$town) <- town_lookup_table
+bostonPrices <- BostonHousing2[, c("cmedv", "crim", "zn", "indus", "nox",
+                                   "rm", "age", "lstat", "town")]
 
 # Explore data ----------------------------------------------------------------
 plot(bostonPrices)
@@ -46,28 +29,51 @@ hist.data.frame(BostonHousing2[, c("cmedv", "crim", "zn", "indus", "nox",
 hist(bostonPrices$cmedv) # right skewed and >0 suggests log-transform
 hist(log(bostonPrices$cmedv))
 
+hist(bostonPrices$crim)
+hist(log(bostonPrices$crim))
+
+hist(bostonPrices$zn)
+hist(log(bostonPrices$zn))
+
+hist(bostonPrices$rm)
+
+hist(bostonPrices$age)
+#hist(bostonPrices$age^2)
+
+hist(bostonPrices$lstat)
+hist(log(bostonPrices$lstat))
+
+#suggested tranformations:
+#rightskewed->log: cmedv, crim, nox, zn        and lstat
+#non: indus, rm, age (^2 results in U), town
+
 # Correlation of continuous variables
 cor(bostonPrices[, c("cmedv", "crim", "zn", "indus", "nox",
                      "rm", "age", "lstat")], bostonPrices$cmedv)
 # -> lstat high negative corr, rm high positive corr
 
+bostonPrices$cmedv <- log(bostonPrices$cmedv)
+colnames(bostonPrices)[1] <- "log_cmedv"
+
 # Fit GLARE -------------------------------------------------------------------
 
 # Initialize
-perturbation_towns <- names(table(bostonPrices$town))
-pert_town_len <- length(perturbation_towns)
-
-xi_values <- c(0, 1, 5, 10)
-# xi_values <- c(0, 1, 5, 10, 50, 100, 10000)
+xi_values <- c(0, 1, 5, 10, 50, 100, 10000)
 xi_len <- length(xi_values)
 
-fit_list <- list()
-convergence_message <- matrix(nrow = pert_town_len,
-                              ncol = xi_len)
+bostonPrices$town <- factor(bostonPrices$town)
+names.arg <- levels(bostonPrices$town)
+levels(bostonPrices$town) <- abbreviate(names.arg, minlength = 2, use.classes = TRUE,
+                                        dot = FALSE, strict = FALSE,
+                                        method = c("left.kept", "both.sides"), named = TRUE)
 
-for (t in 1:pert_town_len) {
+perturbation_towns <- names(table(bostonPrices$town))
+
+fit_list <- list()
+
+for (t in 1:length(perturbation_towns)) {
   
-  print(paste(t, "of", pert_town_len))
+  print(paste(t, "of", length(perturbation_towns)))
   
   pert_town <- perturbation_towns[t]
   
@@ -86,19 +92,15 @@ for (t in 1:pert_town_len) {
   resid_pert <- matrix(nrow = xi_len, ncol = nrow(test_set))
   RMSE <- numeric(xi_len)
   
-  logLik <- numeric(xi_len)
-  
   pb_xi <- txtProgressBar(min = 0, max = xi_len, style = 3)
   for (i in 1:xi_len) {
     
     xi <- xi_values[i]
     
-    fit_temp <- glare(formula = cmedv ~ crim + zn + indus + nox + rm +
+    fit_temp <- glare(formula = log_cmedv ~ crim + zn + indus + nox + rm +
                         age + lstat,
                       A_formula = ~ town, data = train_set, xi = xi,
-                      family = gaussian(link = "log"), type = "deviance")
-    
-    convergence_message[t, i] <- fit_temp$optim$convergence
+                      family = gaussian, type = "pearson")
     
     # Coefficients
     b[i, ] <- as.numeric(coef(fit_temp))
@@ -106,19 +108,15 @@ for (t in 1:pert_town_len) {
     
     # Predictions, Residuals and MSE
     predictions[i, ] <- predict(fit_temp, type = "response", newdata = test_set)
-    resid_pert[i, ] <- test_set$cmedv - predictions[i, ]
+    resid_pert[i, ] <- test_set$log_cmedv - predictions[i, ]
     RMSE[i] <- sqrt(mean((resid_pert[i, ])^2))
     
-    # Likelihood
-    logLik_indiv <- logLik(fit_temp, newdata = test_set, indiv = TRUE)
-    logLik[i] <- mean(logLik_indiv)
-
     Sys.sleep(0.1)
     setTxtProgressBar(pb_xi, i)
   }
   close(pb_xi)
   
-  fit_list[[t]] <- list(b, b_se, predictions, RMSE, logLik = logLik)
+  fit_list[[t]] <- list(b, b_se, predictions, RMSE)
 }
 
 # path_name <- "./data sets/data_examples/bostonHousing/"
@@ -142,7 +140,7 @@ b_matrix <- data.frame(b_matrix)
 b_matrix <- transform(b_matrix, xi = as.character(xi))
 b_matrix <- transform(b_matrix, Town = as.character(Town))
 
-for (t in 1:pert_town_len) {
+for (t in 1:length(perturbation_towns)) {
   
   test_town <- perturbation_towns[t]
   
