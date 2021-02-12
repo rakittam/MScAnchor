@@ -1,6 +1,6 @@
 # GLARE for Boston Housing Data
 #
-# Date: 08.02.21     Author: Maic Rakitta
+# Date: 12.02.21     Author: Maic Rakitta
 ###############################################################################
 
 library(glare)
@@ -8,6 +8,8 @@ library(mlbench)
 library(ggplot2)
 library(tidyr)
 library(ggpubr) # for theme and ggarrange
+library(dplyr) # for labels in boxplot
+library(tibble) # for labels in boxplot
 
 theme_set(theme_bw())
 
@@ -16,7 +18,7 @@ data("BostonHousing2")
 
 # standartize covariates and normalize response
 std_covariates <- scale(BostonHousing2[, c("crim", "zn", "indus", "nox",
-                                 "rm", "age", "lstat")])
+                                           "rm", "age", "lstat")])
 nor_response <- (BostonHousing2[, "cmedv"] - min(BostonHousing2[, "cmedv"])) /
   (max(BostonHousing2[, "cmedv"]) - min(BostonHousing2[, "cmedv"]))
 
@@ -74,7 +76,7 @@ for (t in 1:pert_town_len) {
   # Create observed and unobserved environment
   train_set <- bostonPrices[bostonPrices$town != pert_town, ]
   test_set <- bostonPrices[bostonPrices$town == pert_town, ]
-
+  
   # Run GLAREs
   b <- matrix(nrow = xi_len, ncol = 8)
   colnames(b) <- c("Intercept", "crim", "zn", "indus",
@@ -112,7 +114,7 @@ for (t in 1:pert_town_len) {
     # Likelihood
     logLik_indiv <- logLik(fit_temp, newdata = test_set, indiv = TRUE)
     logLik[i] <- mean(logLik_indiv)
-
+    
     Sys.sleep(0.1)
     setTxtProgressBar(pb_xi, i)
   }
@@ -128,16 +130,14 @@ for (t in 1:pert_town_len) {
 # Plots -----------------------------------------------------------------------
 
 # Prepare data
-# xi_values <- c(0, 1, 5, 10, 50, 100, 10000)
-# xi_len <- length(xi_values)
-# load("./data sets/data_examples/bostonHousing/2021-02-08/fit_list.Rdata")
+load("./data sets/data_examples/bostonHousing/2021-02-11/fit_list.Rdata")
 
 gg_data <- data.frame(matrix(ncol = 4, nrow = 0))
-colnames(gg_data) <- c("test_town", "xi", "RMSE", "b")
+colnames(gg_data) <- c("test_town", "xi", "logLik", "RMSE")
 
 b_matrix <- matrix(0, nrow = 0, ncol = 10)
 colnames(b_matrix) <- c("xi", "Town", "Intercept", "crim", "zn", "indus",
-                 "nox", "rm", "age","lstat")
+                        "nox", "rm", "age","lstat")
 b_matrix <- data.frame(b_matrix)
 b_matrix <- transform(b_matrix, xi = as.character(xi))
 b_matrix <- transform(b_matrix, Town = as.character(Town))
@@ -150,10 +150,11 @@ for (t in 1:pert_town_len) {
     
     xi <- xi_values[i]
     
+    logLik <- fit_list[[t]][["logLik"]][i]
     RMSE <- fit_list[[t]][[4]][i]
     b <- fit_list[[t]][[1]][i, ]
-  
-    data_temp <- data.frame(test_town, xi, RMSE, b)
+    
+    data_temp <- data.frame(test_town, xi, logLik, RMSE)
     gg_data <- rbind(gg_data, data_temp)
     
     b_frame <- data.frame(t(b))
@@ -162,6 +163,67 @@ for (t in 1:pert_town_len) {
   }
 }
 
+# Boxplot without labels
+gg_data$xi <- factor(gg_data$xi, levels = xi_values)
+
+gg_boxplot <- ggplot(gg_data, aes(y = logLik, x = xi, color = xi, group = xi)) +
+  geom_boxplot()
+gg_boxplot
+
+ggsave(filename = "boxplot.pdf", plot = gg_boxplot, height = 4, width = 6)
+
+# Boxplot with labels
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+
+dat <- gg_data %>% mutate(outlier = test_town) %>% group_by(xi) %>% mutate(is_outlier=ifelse(is_outlier(logLik), test_town, as.numeric(NA)))
+dat$outlier[which(is.na(dat$is_outlier))] <- as.numeric(NA)
+
+gg_boxplot_label <- ggplot(dat, aes(y = logLik, x = xi, color = xi, group = xi)) +
+  geom_boxplot() +
+  geom_text(aes(label = outlier), na.rm = TRUE, nudge_x = 0.3, nudge_y = 0)
+gg_boxplot_label
+
+ggsave(filename = "boxplot_labels.pdf", plot = gg_boxplot_label, height = 4, width = 6)
+
+# Quantile Plots
+alpha_values <- seq(0.8, 1, by = 0.01)
+
+logLik_quant <- data.frame(matrix(nrow = 0, ncol = 3)) 
+                           
+for (i in 1:xi_len) {
+  xi <- xi_values[i]
+  
+  logLik_xi <- gg_data$logLik[gg_data$xi == xi]
+  logLik_quant_temp <- as.numeric(quantile(logLik_xi, probs = alpha_values))
+  logLik_quant <- rbind(logLik_quant, cbind(xi, alpha_values, logLik_quant_temp))
+}
+colnames(logLik_quant) <- c("xi", "alpha", "logLik")
+logLik_quant$xi <- factor(logLik_quant$xi) 
+
+gg_quantiles <- ggplot(logLik_quant, aes(y = logLik, x = xi, color = alpha, group = alpha)) +
+  geom_line() +
+  labs(color = expression(alpha)) +
+  ylab("logLik") +
+  xlab(expression(xi)) 
+  #scale_color_viridis_d(option = "C", end = 0.95)
+gg_quantiles 
+
+ggsave(filename = "quantiles.pdf", plot = gg_quantiles, height = 4, width = 6)
+
+
+
+
+
+
+
+
+
+
+
+
+# old -------------------------------------------------------------------------
 # Plot all
 gg_data$xi <- factor(gg_data$xi, levels = c(0, 1, 5, 10, 50, 100, 10000))
 
@@ -244,15 +306,15 @@ gg_10
 
 ggsave("10obs.pdf", gg_10, width = 9, height = 9)
 
-# -----------------------------------------------------------------------------
+# old -----------------------------------------------------------------------------
 # Parameter plot
 gg_b_data <- b_matrix
 gg_b_data$xi <- factor(gg_b_data$xi, levels = c(0, 1, 5, 10, 50, 100, 10000))
 gg_b_data$test_town <- factor(gg_b_data$test_town)
 names.arg <- levels(gg_b_data$test_town)
 levels(gg_b_data$test_town) <- abbreviate(names.arg, minlength = 2, use.classes = TRUE,
-                                        dot = FALSE, strict = FALSE,
-                                        method = c("left.kept", "both.sides"), named = TRUE)
+                                          dot = FALSE, strict = FALSE,
+                                          method = c("left.kept", "both.sides"), named = TRUE)
 
 
 gg_b_data2 <- gg_b_data[gg_b_data$xi %in% c(0,5,50,10000), ]
