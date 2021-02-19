@@ -47,7 +47,7 @@ load("./data sets/simulation_study/ex1/2021-01-27/sim3.Rdata")
 data_rot_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
 colnames(data_rot_X_fixi) <- c("rep", "v", "xi",
                                "b", "se", "logLik_pert", "deviance", "pearson")
-for (i in 1:nsim) {
+for (i in 1:100) {
   
   data_temp <- sim_data_rot_X_fixi[[i]][["data"]][["data"]]
   
@@ -143,7 +143,7 @@ arr
 
 # sim1: Poisson IV with fixed v ---
 
-load("./data sets/simulation_study/ex2/2021-01-27/sim1.Rdata")
+load("./data sets/simulation_study/ex2/2021-02-18/sim1.Rdata")
 
 data_poi_X_states_fivi <- sim_data_poi_X_fivi$states
 data_poi_X_fivi <- sim_data_poi_X_fivi$sim_data
@@ -155,7 +155,7 @@ plot_fivi_X(data_poi_X_fivi)
 
 # sim2: Poisson IV with fixed xi ---
 
-load("./data sets/simulation_study/ex2/2021-01-27/sim2.Rdata")
+load("./data sets/simulation_study/ex2/2021-02-18/sim2.Rdata")
 
 
 # Compute data
@@ -232,7 +232,7 @@ plot_IV(IV_b_data, causal_parameter = 0.4)
 
 # sim4: Poisson IV several quantiles ---
 
-load("./data sets/simulation_study/ex2/2021-01-27/sim4.Rdata")
+load("./data sets/simulation_study/ex2/2021-02-18/sim4.Rdata")
 
 data_poi_X_quant <- sim_data_poi_X_quant$sim_data
 
@@ -246,9 +246,91 @@ plot_quant(data_poi_X_quant, q_values, xi_big = 10000)
 
 # ex3: Binomial with IV Example -----------------------------------------------
 
+
+# Define variables for unperturbed and perturbed data set
+def_bin_X <- defData(varname = "A", dist = "normal", 
+                     formula = 0, variance = 0.25)
+def_bin_X <- defData(def_bin_X, varname = "H", dist = "normal",
+                     formula = 0, variance = 0.25)
+def_bin_X <- defData(def_bin_X, varname = "X", dist = "normal", 
+                     formula = "2 * H + A", variance = 0.25)
+def_bin_X <- defData(def_bin_X, varname = "Y", dist = "binomial", link = "logit", 
+                     formula = "0.4 * X + 1 * H", variance = 1)
+
+def_bin_X_pert <- defData(varname = "A", dist = "normal", 
+                          formula = 0, variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "v", 
+                          formula = 3) # set perturbation strength
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "H", dist = "normal",
+                          formula = 0, variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "X", dist = "normal", 
+                          formula = "2 * H + v", variance = 0.25)
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial", link = "logit",
+                          formula = "0.4 * X + 1 * H", variance = 1)
+
+# Parameters of linear predictor
+b <- 0.4
+h <- 1
+
+v <- 3
+
+set.seed(96853)
+# Distribution histogram
+dd <- genData(1000, def_poi_X)
+dd_pert <- genData(1000, def_poi_X_pert)
+
+eta <- b*dd$X + h * dd$H
+eta_pert <- b*dd_pert$X + h * dd_pert$H
+
+p <- exp(eta)/(1+exp(eta))
+p_pert <- exp(eta_pert)/(1+exp(eta_pert))
+
+gg_hist <- data.frame(eta = c(eta, eta_pert),
+                      p = c(p, p_pert),
+                      Y = c(dd$Y,dd_pert$Y),
+                      data = c(rep("unpert", length(eta)),
+                               rep("pert", length(eta))))
+# eta plot
+phist <- gghistogram(
+  gg_hist, x = "eta", 
+  add = "mean", rug = FALSE,
+  fill = "data", palette = c("#FF6666", "#00AFBB"),
+  bins = 30
+) + xlab(expression(eta)) + rremove("legend")
+
+pdensity <- ggdensity(
+  gg_hist, x = "eta", 
+  color= "data", palette = c("#FF6666", "#00AFBB"),
+  alpha = 0,
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  theme_half_open(11, rel_small = 1) +
+  rremove("x.axis")+
+  rremove("xlab") +
+  rremove("x.text") +
+  rremove("x.ticks") +
+  rremove("legend")
+
+aligned_plots <- align_plots(phist, pdensity, align="hv", axis="tblr")
+gg_eta <- ggdraw(aligned_plots[[1]]) + draw_plot(aligned_plots[[2]])
+
+# Y plot
+gg_Y <- ggplot(gg_hist, aes(Y, fill = data)) + 
+  geom_bar(position = 'identity', alpha = .4) +
+  scale_fill_manual("data", values = c("pert" = "#FF6666", "unpert" = "#00AFBB"))
+
+arr <- ggarrange(gg_eta, gg_Y,
+                 labels = c("A", "B"),
+                 font.label = list(face = "plain"),
+                 ncol = 1, nrow = 2, common.legend = TRUE)
+arr
+
+# ggsave(filename = "ex3hist.pdf", plot = arr, height = 4, width = 6)
+
+
 # sim1: Binomial IV with fixed v ---
 
-load("./data sets/simulation_study/ex3/2021-01-18/sim1.Rdata")
+load("./data sets/simulation_study/ex3/2021-02-19/sim1.Rdata")
 
 data_bin_X_states_fivi <- sim_data_bin_X_fivi$states
 data_bin_X_fivi <- sim_data_bin_X_fivi$sim_data
@@ -260,7 +342,7 @@ plot_fivi_X(data_bin_X_fivi)
 
 # sim2: Binomial IV with fixed xi ---
 
-load("./data sets/simulation_study/ex3/2021-01-18/sim2.Rdata")
+load("./data sets/simulation_study/ex3/2021-02-19/sim2.Rdata")
 
 # Compute data
 data_bin_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
@@ -286,40 +368,48 @@ load("./data sets/simulation_study/ex3/2021-01-18/sim3.Rdata")
 IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = 1)
 
+# sim4: Poisson IV several quantiles ---
+
+load("./data sets/simulation_study/ex2/2021-02-17/sim4.Rdata")
+
+data_bin_X_quant <- sim_data_bin_X_quant$sim_data
+
+head(data_bin_X_quant)
+str(data_bin_X_quant)
+
+q_values <- seq(0, 1, by = 0.01)
+plot_quant(data_bin_X_quant, q_values, xi_big = 10000)
+
+
 # ex4: Poisson with Anchor on X, H and Y --------------------------------------
 
 # Define variables for unperturbed and perturbed data set
-def_poi_XHY <- defData(varname = "A", dist = "normal", variance = 0.25,
-                       formula = 0)
+def_poi_XHY <- defData(varname = "A", dist = "normal", 
+                       formula = 0, variance = 0.25)
 def_poi_XHY <- defData(def_poi_XHY, varname = "H", dist = "normal",
-                       variance = 0.25,
-                       formula = "0.6 + A",)
-def_poi_XHY <- defData(def_poi_XHY, varname = "X", dist = "normal",
-                       variance = 0.25,
-                       formula = "H + A")
-def_poi_XHY <- defData(def_poi_XHY, varname = "Y",
-                       dist = "poisson", link = "log", 
-                       formula = "0.8 * X - H - A")
+                       formula = "0.5 * A", variance = 0.25)
+def_poi_XHY <- defData(def_poi_XHY, varname = "X", dist = "normal", 
+                       formula = "2 * H + A", variance = 0.25)
+def_poi_XHY <- defData(def_poi_XHY, varname = "Y", dist = "poisson", link = "log", 
+                       formula = "0.4 * X + 1 * H - A", variance = 1)
 
 def_poi_XHY_pert <- defData(varname = "A", dist = "normal", 
-                            variance = 0.25,
-                            formula = 0)
+                            formula = 0, variance = 0.25)
+def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "v", 
+                            formula = 2) # set perturbation strength
 def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "H", dist = "normal",
-                            variance = 0.25,
-                            formula = "0.6 + 0.2 * A") # set perturbation
+                            formula = "0.5", variance = 0.25)
 def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "X", dist = "normal", 
-                            variance = 0.25,
-                            formula = "H - 1 * A") # set perturbation 
-def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y",
-                            dist = "poisson", link = "log", 
-                            formula = "0.8 * X - H + 2 * A") # set perturbation 
+                            formula = "2 * H + v", variance = 0.25)
+def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y", dist = "poisson", link = "log",
+                            formula = "0.4 * X + 1 * H - 1.5", variance = 1)
 
 # Parameters of linear predictor
-b <- 0.8
-h <- -1
+b <- 0.4
+h <- 1
 a <- -1
 
-a_pert <- 2
+a_pert <- -1.5
 
 # sim0: General ---
 
@@ -376,7 +466,7 @@ arr
 
 # sim1: Poisson with Anchor on X, H and Y fixed v ---
 
-load("./data sets/simulation_study/ex4/2021-01-27/sim1.Rdata")
+load("./data sets/simulation_study/ex4/2021-02-19/sim1.Rdata")
 
 data_poi_XHY_fivi_states <- sim_data_poi_XHY_fivi$states
 data_poi_XHY_fivi <- sim_data_poi_XHY_fivi$sim_data
@@ -388,7 +478,7 @@ plot_fivi_XHY(data_poi_XHY_fivi)
 
 # sim4: Poisson IV several quantiles ---
 
-load("./data sets/simulation_study/ex4/2021-01-27/sim4.Rdata")
+load("./data sets/simulation_study/ex4/2021-02-19/sim4.Rdata")
 
 data_poi_XHY_quant <- sim_data_poi_XHY_quant$sim_data
 
@@ -403,7 +493,7 @@ plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 
 # sim1: Label Noise with fixed v ---
 
-load("./data sets/simulation_study/ex5/2021-02-03/sim1.Rdata")
+load("./data sets/simulation_study/ex5/2021-02-18/sim1.Rdata")
 
 data_LN_states_fivi <- sim_data_LN_fivi$states
 data_LN_fivi <- sim_data_LN_fivi$sim_data
@@ -420,7 +510,7 @@ load("./data sets/simulation_study/ex5/2021-02-03/sim2.Rdata")
 # Compute data
 data_LN_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
 colnames(data_LN_fixi) <- c("rep", "v", "xi",
-                               "b", "se", "logLik_pert", "deviance", "pearson")
+                            "b", "se", "logLik_pert", "deviance", "pearson")
 for (i in 1:nsim) {
   
   data_temp <- sim_data_LN_fixi[[i]][["data"]][["data"]]
@@ -437,7 +527,7 @@ plot_fixi(data_LN_fixi)
 # Plot with glm(Y~X+A-1)
 data_LN_fixi_glm <- data.frame(matrix(nrow = 0, ncol = 8))
 colnames(data_LN_fixi_glm) <- c("rep", "v", "xi",
-                            "b", "se", "logLik_pert", "deviance", "pearson")
+                                "b", "se", "logLik_pert", "deviance", "pearson")
 for (i in 1:nsim) {
   
   data_temp <- sim_data_LN_fixi_glm[[i]][["data"]][["data"]]
@@ -456,7 +546,7 @@ plot_fixi(data_LN_fixi_all)
 
 # sim4: Label Noise several quantiles ---
 
-load("./data sets/simulation_study/ex5/2021-02-03/sim4.Rdata")
+load("./data sets/simulation_study/ex5/2021-02-18/sim4.Rdata")
 
 data_LN_quant <- sim_data_LN_quant$sim_data
 
@@ -465,4 +555,58 @@ str(data_LN_quant)
 
 q_values <- seq(0, 1, by = 0.01)
 plot_quant(data_LN_quant, q_values, xi_big = 10000)
+
+# ex6: Label Noise Example ----------------------------------------------------
+
+# sim1: Label Noise with fixed v ---
+
+load("./data sets/simulation_study/ex6/2021-02-17/sim1.Rdata")
+
+data_LN_states_fivi <- sim_data_LN_fivi$states
+data_LN_fivi <- sim_data_LN_fivi$sim_data
+
+head(data_LN_fivi)
+summary(data_LN_fivi)
+
+plot_fivi_X(data_LN_fivi)
+
+
+
+
+
+
+# sim4: Label Noise several quantiles ---
+
+load("./data sets/simulation_study/ex6/2021-02-17/sim4.Rdata")
+
+data_LN_quant <- sim_data_LN_quant$sim_data
+
+head(data_LN_quant)
+str(data_LN_quant)
+
+q_values <- seq(0, 1, by = 0.01)
+plot_quant(data_LN_quant, q_values, xi_big = 10000)
+
+# Plot with glm(Y~X+A-1)
+
+load("./data sets/simulation_study/ex6/2021-02-17/sim4_glm.Rdata")
+
+data_LN_quant_glm <- sim_data_LN_quant_glm$sim_data
+
+q_len <- length(q_values)
+
+quantile_array <- matrix(nrow = nsim, ncol = q_len)
+
+for (i in 1:nsim) {
+  for (q in 1:q_len) {
+    quant <- q_values[q]
+    
+    quantile_array[i, q] <- 
+      as.numeric(quantile(data_LN_quant_glm[[i]][[2]][, 2], quant))
+    
+  }
+}
+glm_quantile_vector <- apply(quantile_array, 2, mean)
+
+plot_quant(data_LN_quant, q_values, xi_big = 10000, glm_quantile_vector)
 

@@ -95,9 +95,9 @@ plot_rot <- function(sim_data, xi_big = 10000) {
       
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
-                          name=expression(gamma~(xi)),
+                          name=expression(gamma~"["*xi*"]"),
                           breaks=c(1.111111, 1.555556, 2.000000),
-                          labels=c("17.7 (8.3)", "1.8 (0.4)", "0 (-0.5)"))
+                          labels=c("17.7 [8.3]", "1.8 [0.4]", "0 [-0.5]"))
     ) + theme(legend.position = c(0.2, 0.8))
   
   print(gg_parameter)
@@ -186,61 +186,182 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
     geom_vline(xintercept = 0, linetype = "dashed") +
     
-    ylab("0.9-quantile of logLik") +
-    
-    scale_x_continuous(
-      
-      # Features of the first axis
-      name = expression(xi),
-      # limits = c(-0.142,-0.020),
-      # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
-      
-      # Add a second axis and specify its features
-      sec.axis = sec_axis(trans= ~.,
-                          name= expression(hat(b)),
-                          breaks=c(0, 2.5, 5, 7.5, 10),
-                          labels= round(
-                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3)
-      )
-      
-      #mean_data_glare$mean_b[mean_data_glare$xi == 0]
-    )
-  
+    ylab("0.9-quantile of -logLik") 
+    # 
+    # scale_x_continuous(
+    #   
+    #   # Features of the first axis
+    #   name = expression(xi),
+    #   # limits = c(-0.142,-0.020),
+    #   # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+    #   
+    #   # Add a second axis and specify its features
+    #   sec.axis = sec_axis(trans= ~.,
+    #                       name= expression(hat(b)),
+    #                       breaks=c(0, 10, 20, 30, 40, 50),
+    #                       labels= round(
+    #                         mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 10, 20, 30, 40, 50)], digits = 3)
+    #   )
+    #   
+    #   #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+    # )
+    # 
   print(gg1)
   invisible(list(mean_data_glare, mean_data_big))
   
   
-  gg2 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = mean_b)) +
-    
-    geom_line() +
-    geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
-    geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
-    
-    ylab("0.9-quantile of logLik") + 
-    #xlab("b")
-    
-    scale_x_continuous(
-      
-      
-      
-      # Features of the first axis
-      name = expression(hat(b)),
-      
-      # Add a second axis and specify its features
-      sec.axis = sec_axis(trans= ~.,
-                          name=expression(xi),
-                          breaks=c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75),
-                          labels=sapply(c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75), axis_function))
-      
-      #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
-    ) 
+  # gg2 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = mean_b)) +
+  #   
+  #   geom_line() +
+  #   geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+  #   geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
+  #   
+  #   ylab("0.9-quantile of -logLik") + 
+  #   #xlab("b")
+  #   
+  #   scale_x_continuous(
+  #     
+  #     
+  #     
+  #     # Features of the first axis
+  #     name = expression(hat(b)),
+  #     
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name=expression(xi),
+  #                         breaks=c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75),
+  #                         labels=sapply(c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75), axis_function))
+  #     
+  #     #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
+  #   ) 
   
-  invisible(list(mean_data_glare, mean_data_big))
-  
-  
-  # Plots for LaTeX
-  ggsave(filename = "ex2sim1.pdf", plot = gg1, height = 4, width = 6)
-  
+# 
+#   # Example 2 Plots for LaTeX
+#   ggsave(filename = "sim1.pdf", plot = gg1, height = 4, width = 6)
+#   
+#   gg3 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
+#     
+#     geom_line() +
+#     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+#     geom_vline(xintercept = 0, linetype = "dashed") +
+#     
+#     ylab("0.9-quantile of -logLik") +
+#     
+#     scale_x_continuous(
+#       
+#       # Features of the first axis
+#       name = expression(xi),
+#       # limits = c(-0.142,-0.020),
+#       # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+#       
+#       # Add a second axis and specify its features
+#       sec.axis = sec_axis(trans= ~.,
+#                           name= expression(hat(b)),
+#                           breaks=c(0, 2.5, 5, 7.5, 10),
+#                           labels= round(
+#                             mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3)
+#       )
+#       
+#       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+#     ) +
+#     annotate("text", label="b = 0.4", colour = 1, x = 7.5, y = 9.5)
+#   
+#   # Plots for LaTeX
+#   ggsave(filename = "ex2sim1.pdf", plot = gg3, height = 4, width = 6)
+
+  # # Example 3
+  # gg4 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
+  # 
+  #   geom_line() +
+  #   geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+  #   geom_vline(xintercept = 0, linetype = "dashed") +
+  # 
+  #   ylab("0.9-quantile of -logLik") +
+  # 
+  #   scale_x_continuous(
+  # 
+  #     # Features of the first axis
+  #     name = expression(xi),
+  #     # limits = c(-0.142,-0.020),
+  #     # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+  # 
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name= expression(hat(b)),
+  #                         breaks=c(0, 10, 20, 30, 40, 50),
+  #                         labels= round(
+  #                           mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 10, 20, 30, 40, 50)], digits = 3)
+  #     )
+  # 
+  #     #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+  #   ) +
+  #   annotate("text", label="b = 0.4", colour = 1, x = 30, y = 1.975)
+  # 
+  # # Plots for LaTeX
+  # ggsave(filename = "ex3sim1.pdf", plot = gg4, height = 4, width = 6)
+
+#   # Example 5
+#   gg5 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
+#     
+#     geom_line() +
+#     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+#     geom_vline(xintercept = 0, linetype = "dashed") +
+#     
+#     ylab("0.9-quantile of -logLik") +
+#     
+#     scale_x_continuous(
+#       
+#       # Features of the first axis
+#       name = expression(xi),
+#       # limits = c(-0.142,-0.020),
+#       # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+#       
+#       # Add a second axis and specify its features
+#       sec.axis = sec_axis(trans= ~.,
+#                           name= expression(hat(b)),
+#                           breaks=c(0, 2.5, 5, 7.5, 10),
+#                           labels= round(
+#                             mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3)
+#       )
+#       
+#       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+#     ) +
+#     annotate("text", label="b = 0.5", colour = 1, x = 7.5, y = 1.2)
+# 
+#   # Plots for LaTeX
+#   ggsave(filename = "ex5sim1.pdf", plot = gg5, height = 4, width = 6)
+#   
+#   # Example 6
+#   gg5 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
+#     
+#     geom_line() +
+#     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+#     geom_vline(xintercept = 0, linetype = "dashed") +
+#     
+#     ylab("0.9-quantile of -logLik") +
+#     
+#     scale_x_continuous(
+#       
+#       # Features of the first axis
+#       name = expression(xi),
+#       # limits = c(-0.142,-0.020),
+#       # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+#       
+#       # Add a second axis and specify its features
+#       sec.axis = sec_axis(trans= ~.,
+#                           name= expression(hat(b)),
+#                           breaks=c(0, 2.5, 5, 7.5, 10),
+#                           labels= round(
+#                             mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3)
+#       )
+#       
+#       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+#     ) +
+#     annotate("text", label="b = 0.5", colour = 1, x = 7.5, y = 0.76)
+#   
+#   # Plots for LaTeX
+#   ggsave(filename = "ex6sim1.pdf", plot = gg5, height = 4, width = 6)
+#   
 }
 
 # Plot function for fixed xi --------------------------------------------------
@@ -256,16 +377,16 @@ plot_fixi <- function(sim_data) {
   
   gg_data <- mean_data
   gg_data$xi_val <- as.factor(mean_data$xi)
-  # gg_data$xi_val <- factor(mean_data$xi, levels = c("glm", "0", "1", "3", "5",
-  #                                                   "8", "10", "20", "50", "10000")) 
-  
+  #gg_data$xi_val <- factor(mean_data$xi, levels = c("glm", "0", "1", "3", "5",
+  #                                                  "8", "10", "20", "50", "10000"))
+
   gg1 <- ggplot(gg_data, aes(y = mean_logLik_pert, x = v, color = xi_val, group = xi_val)) +
     
     geom_line() +
     scale_color_viridis_d(option = viri_opt, end = 0.95)+
     
    labs(color = expression(xi)) +
-    ylab("0.9-quantile of logLik") +
+    ylab("0.9-quantile of -logLik") +
     xlab("")  #xlab("v") 
   
   gg_data2 <- gg_data[gg_data$v <= 3 & gg_data$v >= -1, ]
@@ -276,7 +397,7 @@ plot_fixi <- function(sim_data) {
     scale_color_viridis_d(option = viri_opt, end = 0.95)+
     
      labs(color = expression(xi)) +
-    ylab("") + # ylab("0.9-quantile of logLik") +
+    ylab("") + # ylab("0.9-quantile of -logLik") +
     xlab("") # xlab("v") 
 
   
@@ -335,10 +456,10 @@ plot_fixi <- function(sim_data) {
                    ncol = 2, nrow = 3, common.legend = TRUE, legend="right",
                    font.label = list(face = "plain"))
   
-  ggsave(filename = "ex2sim2.pdf", plot = arr, height = 7, width = 5)
+  ggsave(filename = "ex2sim2.pdf", plot = arr, height = 7.5, width = 5)
  
-  # # plot for ex1 
-  # gg_data_rot <- gg_data[gg_data$v <= 5 & gg_data$v >= 0, ]
+  # # plot for ex1
+  # gg_data_rot <- gg_data[gg_data$v <= 10 & gg_data$v >= 0, ]
   # 
   # gg_rot <- ggplot(gg_data_rot, aes(y = mean_logLik_pert, x = v, color = xi_val, group = xi_val)) +
   # 
@@ -346,25 +467,23 @@ plot_fixi <- function(sim_data) {
   #   scale_color_viridis_d(option = viri_opt, end = 0.95)+
   # 
   #   labs(color = expression(xi)) +
-  #   ylab("0.9-quantile of logLik") +
+  #   ylab("0.9-quantile of -logLik") +
   #   xlab("|v|") +
-  #   theme(legend.position = c(0.2, 0.3))
+  #   theme(legend.position = c(0.15, 0.75))
   # 
-  # pdf("ex1sim3.pdf", height=3, width=3)
-  # print(gg_rot)
-  # dev.off()
+  # gg_rot
   # 
   # ggsave(filename = "ex1sim3.pdf", plot = gg_rot, height = 4, width = 6)
-  # 
-  # # Plots for LaTeX
-  # arr2 <- ggarrange(gg3, gg4,
-  #                  gg5, gg6,
-  #                  labels = c("A", "B", "C","D"),
-  #                  ncol = 2, nrow = 2, common.legend = TRUE, legend="right",
-  #                  font.label = list(face = "plain"))
-  # 
-  # ggsave(filename = "ex2sim2_RMSE.pdf", plot = arr2, height = 5, width = 5)
-  
+
+  # Plots for LaTeX
+  arr2 <- ggarrange(gg3, gg4,
+                   gg5, gg6,
+                   labels = c("A", "B", "C","D"),
+                   ncol = 2, nrow = 2, common.legend = TRUE, legend="right",
+                   font.label = list(face = "plain"))
+
+  ggsave(filename = "ex2sim2_RMSE.pdf", plot = arr2, height = 5, width = 5)
+
   # # Plots for LaTeX Ex5
   # arr <- ggarrange(gg1, 
   #                  gg3,
@@ -374,6 +493,11 @@ plot_fixi <- function(sim_data) {
   #                  font.label = list(face = "plain"))
   # 
   # ggsave(filename = "ex5sim2.pdf", plot = arr, height = 7, width = 5)
+  
+  
+  
+  # Ex6
+  # first uncomment xi factor arrangement above
   
 }
 
@@ -495,7 +619,7 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
     geom_vline(xintercept = 0, linetype = "dashed") +
     
-    ylab("0.9-quantile of logLik") +
+    ylab("0.9-quantile of -logLik") +
     
     scale_x_continuous(
       
@@ -507,9 +631,9 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
                           name= expression(hat(b)),
-                          breaks = c(0, 2.5, 5, 7.5, 10),
+                          breaks = c(0, 10, 20, 30, 40, 50),
                           labels = round(
-                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 2.5, 5, 7.5, 10)], digits = 3))
+                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 10, 20, 30, 40, 50)], digits = 3))
       
       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
     )
@@ -518,39 +642,70 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
   invisible(list(mean_data_glare, mean_data_big))
   
   
-  gg2 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = mean_b)) +
+  # gg2 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = mean_b)) +
+  #   
+  #   geom_line() +
+  #   geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+  #   geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
+  #   
+  #   ylab("0.9-quantile of -logLik") + 
+  #   #xlab("b")
+  #   
+  #   scale_x_continuous(
+  #     
+  #     # Features of the first axis
+  #     name = expression(hat(b)),
+  #     # limits = c(-0.142,-0.020),
+  #     breaks = c(-0.300, -0.225, -0.150, -0.075, 0.000),
+  #     
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name=expression(xi),
+  #                         breaks=c(-0.225, -0.150, -0.075),
+  #                         labels=c(  "2.6", "0.7", "0.2"))
+  #     
+  #     #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
+  #   ) 
+  
+  # Plots for LaTeX
+  ggsave(filename = "ex4sim1.pdf", plot = gg1, height = 4, width = 6)
+  
+  gg4 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
     
     geom_line() +
     geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
-    geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
+    geom_vline(xintercept = 0, linetype = "dashed") +
     
-    ylab("0.9-quantile of logLik") + 
-    #xlab("b")
+    ylab("0.9-quantile of -logLik") +
     
     scale_x_continuous(
       
       # Features of the first axis
-      name = expression(hat(b)),
+      name = expression(xi),
       # limits = c(-0.142,-0.020),
-      breaks = c(-0.300, -0.225, -0.150, -0.075, 0.000),
+      # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
       
       # Add a second axis and specify its features
       sec.axis = sec_axis(trans= ~.,
-                          name=expression(xi),
-                          breaks=c(-0.225, -0.150, -0.075),
-                          labels=c(  "2.6", "0.7", "0.2"))
+                          name= expression(hat(b)),
+                          breaks = c(0, 10, 20, 30, 40, 50),
+                          labels = round(
+                            mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 10, 20, 30, 40, 50)], digits = 3))
       
-      #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
-    ) 
+      #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+    ) +
+    annotate("text", label="b = 0.4", colour = 1, x = 30, y = 4.75)
   
   # Plots for LaTeX
-  ggsave(filename = "ex4sim1.pdf", plot = gg1, height = 4, width = 6)
+  ggsave(filename = "ex4sim1.pdf", plot = gg4, height = 4, width = 6)
+  
 }
 
 
 
 # Plot function for fixed v interventions with varying alpha quantile ---------
-plot_quant <- function(sim_data, q_values, xi_big = 10000) {
+plot_quant <- function(sim_data, q_values, xi_big = 10000,
+                       glm_quantile_vector = NULL) {
   
   xi_len <- length(sim_data[[1]][[2]][, 1])
   q_len <- length(q_values)
@@ -586,18 +741,20 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   
   gg1 <- ggplot(gg_data2, aes(y = value, x = variable, color = xi, group = xi)) +
     geom_line() +
-    ylab(expression(alpha-quantiles~of~logLik)) +
+    ylab(expression(alpha-quantiles~of~-logLik)) +
     xlab(expression(alpha)) +
-    labs(color = expression(xi))
+    labs(color = expression(xi)) +
+    scale_color_viridis_c(option = "C", end = 0.95)
   
   # Zoom in
-  gg_data3 <- gg_data2[gg_data2$variable >= 0.8, ]
+  gg_data3 <- gg_data2[gg_data2$variable >= 0.9, ]
   
   gg3 <- ggplot(gg_data3, aes(y = value, x = variable, color = xi, group = xi)) +
     geom_line() +
-    ylab(expression(alpha-quantiles~of~logLik)) +
+    ylab(expression(alpha-quantiles~of~-logLik)) +
     xlab(expression(alpha)) +
-    labs(color = expression(xi))
+    labs(color = expression(xi)) +
+    scale_color_viridis_c(option = "C", end = 0.95)
   
   
   # Plot for several alpha
@@ -615,18 +772,20 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   
   gg2 <- ggplot(gg_data4, aes(y = value, x = variable, color = alpha, group = alpha)) +
     geom_line() +
-    ylab(expression(alpha-quantiles~of~logLik)) +
+    ylab(expression(alpha-quantiles~of~-logLik)) +
     xlab(expression(xi)) +
-    labs(color = expression(alpha))
+    labs(color = expression(alpha)) +
+    scale_color_viridis_c(option = "C", end = 0.95)
 
   # Zoom in
   gg_data5 <- gg_data4[gg_data4$alpha >= 0.8, ]
   
   gg4 <- ggplot(gg_data5, aes(y = value, x = variable, color = alpha, group = alpha)) +
     geom_line() +
-    ylab(expression(alpha-quantiles~of~logLik)) +
+    ylab(expression(alpha-quantiles~of~-logLik)) +
     xlab(expression(xi)) +
-    labs(color = expression(alpha))
+    labs(color = expression(alpha)) +
+    scale_color_viridis_c(option = "C", end = 0.95)
   
   
   # print(gg1)
@@ -661,10 +820,10 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   alpax <- gg1+
     annotation_custom(
       grob = g1,
-      xmin = 0.15,
-      xmax = 1.02,
-      ymin = -16.5,
-      ymax = -2.5
+      xmin = -0.05,
+      xmax = 0.9,
+      ymin = 5,
+      ymax = 15
     ) 
   alpax
   
@@ -703,10 +862,10 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   alpax <- gg1+
     annotation_custom(
       grob = g1,
-      xmin = 0.15,
-      xmax = 1.02,
-      ymin = -48.5,
-      ymax = -10
+      xmin = -0.05,
+      xmax = 0.88,
+      ymin = 15,
+      ymax = 47
     ) 
   alpax
   
@@ -725,18 +884,18 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   print(gg2)
   
   
-  # # Example 4
+  # # Example 3
   # g1 <- ggplotGrob(gg3 +
   #                    theme(legend.position = "none") +
   #                    labs(x=element_blank(), y=element_blank()))
   # alpax <- gg1+
   #   annotation_custom(
   #     grob = g1,
-  #     xmin = 0.15,
-  #     xmax = 1.02,
-  #     ymin = -16.5,
-  #     ymax = -2.5
-  #   ) 
+  #     xmin = -0.05,
+  #     xmax = 0.8,
+  #     ymin = 1.8,
+  #     ymax = 3.7
+  #   )
   # alpax
   # 
   # arr <- ggarrange(alpax, gg2,
@@ -745,14 +904,43 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   #                  font.label = list(face = "plain"))
   # 
   # # Plots for LaTeX
-  # ggsave(filename = "ex4sim4.pdf", plot = arr, height = 4, width = 6)
+  # ggsave(filename = "ex3sim4.pdf", plot = arr, height = 4, width = 6)
   # 
-  # ggsave(filename = "ex4sim4.1.pdf", plot = alpax, height = 4, width = 6)
-  # ggsave(filename = "ex4sim4.2.pdf", plot = gg2, height = 4, width = 6)
+  # ggsave(filename = "ex3sim4.1.pdf", plot = alpax, height = 4, width = 6)
+  # ggsave(filename = "ex3sim4.2.pdf", plot = gg2, height = 4, width = 6)
   # 
   # print(alpax)
   # print(gg2)
-  
+
+# 
+#   # Example 4
+#   g1 <- ggplotGrob(gg3 +
+#                      theme(legend.position = "none") +
+#                      labs(x=element_blank(), y=element_blank()))
+#   alpax <- gg1+
+#     annotation_custom(
+#       grob = g1,
+#       xmin = -0.05,
+#       xmax = 0.9,
+#       ymin = 7.5,
+#       ymax = 16.5
+#     )
+#   alpax
+# 
+#   arr <- ggarrange(alpax, gg2,
+#                    labels = c("A", "B"),
+#                    ncol = 1, nrow = 2,
+#                    font.label = list(face = "plain"))
+# 
+#   # Plots for LaTeX
+#   ggsave(filename = "ex4sim4.pdf", plot = arr, height = 4, width = 6)
+# 
+#   ggsave(filename = "ex4sim4.1.pdf", plot = alpax, height = 4, width = 6)
+#   ggsave(filename = "ex4sim4.2.pdf", plot = gg2, height = 4, width = 6)
+# 
+#   print(alpax)
+#   print(gg2)
+
   # # Example 5
   # g1 <- ggplotGrob(gg3 +
   #                    theme(legend.position = "none") +
@@ -780,6 +968,26 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000) {
   # 
   # print(alpax)
   # print(gg2)
+  
+  
+  
+  
+  # for example 6 LN involved
+  if(!is.null(glm_quantile_vector)) {
+    
+    glm_frame <- data.frame(xi = -1, variable = q_values, value = glm_quantile_vector)
+    gg_glm_data <- rbind(gg_data2, glm_frame)
+    
+    gg_glm <- ggplot(gg_glm_data, aes(y = value, x = variable, color = xi, group = xi)) +
+      geom_line() +
+      ylab(expression(alpha-quantiles~of~-logLik)) +
+      xlab(expression(alpha)) +
+      labs(color = expression(xi)) +
+      scale_color_viridis_c(option = "C", end = 0.95)
+    gg_glm
+    
+    ggsave(filename = "ex6sim4_glm.pdf", plot = gg_glm, height = 4, width = 6)
+  }
   
 }
 
