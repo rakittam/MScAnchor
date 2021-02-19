@@ -19,9 +19,7 @@ data("BostonHousing2")
 # standartize covariates and normalize response
 std_covariates <- scale(BostonHousing2[, c("crim", "zn", "indus", "nox",
                                            "rm", "age", "lstat")])
-nor_response <- (BostonHousing2[, "cmedv"] - min(BostonHousing2[, "cmedv"])) /
-  (max(BostonHousing2[, "cmedv"]) - min(BostonHousing2[, "cmedv"]))
-
+nor_response <- as.integer(BostonHousing2[, "cmedv"])
 df_temp <- data.frame(cmedv = nor_response, town = BostonHousing2[, "town"])
 
 bostonPrices <- data.frame(std_covariates[, c("crim", "zn", "indus", "nox",
@@ -61,6 +59,7 @@ pert_town_len <- length(perturbation_towns)
 
 # xi_values <- c(0, 1, 5, 10)
 xi_values <- c(0, 1, 10, 100, 1000)
+xi_values <- c(0, 1, 10, 100, 1000, 10000, 100000)
 # xi_values <- c(0, 1, 5, 10, 50, 100, 10000)
 xi_len <- length(xi_values)
 
@@ -68,7 +67,7 @@ fit_list <- list()
 convergence_message <- matrix(nrow = pert_town_len,
                               ncol = xi_len)
 
-for (t in 10:pert_town_len) {
+for (t in 1:pert_town_len) {
   
   print(paste(t, "of", pert_town_len))
   
@@ -105,7 +104,7 @@ for (t in 10:pert_town_len) {
     fit_temp <- glare(formula = cmedv ~ crim + zn + indus + nox + rm +
                         age + lstat,
                       A_formula = ~ town, data = train_set, xi = xi,
-                      family = gaussian(link = "log"), type = "deviance")
+                      family = poisson, type = "deviance")
     
     convergence_message[t, i] <- fit_temp$optim$convergence
     
@@ -137,7 +136,7 @@ for (t in 10:pert_town_len) {
 # Plots -----------------------------------------------------------------------
 
 # Prepare data
-load("./data sets/data_examples/bostonHousing/2021-02-11/fit_list.Rdata")
+# load("./data sets/data_examples/bostonHousing/2021-02-16/fit_list.Rdata")
 
 gg_data <- data.frame(matrix(ncol = 4, nrow = 0))
 colnames(gg_data) <- c("test_town", "xi", "logLik", "RMSE")
@@ -220,7 +219,12 @@ gg_quantiles
 ggsave(filename = "quantiles.pdf", plot = gg_quantiles, height = 4, width = 6)
 
 
+# Plot without outliers
+gg_boxplot_noout <- ggplot(gg_data, aes(y = logLik, x = xi, color = xi, group = xi)) +
+  geom_boxplot(outlier.shape = NA)+ylim(-2.25,-3.25)
+gg_boxplot_noout
 
+ggsave(filename = "boxplot_no_outlier.pdf", plot = gg_boxplot_noout, height = 4, width = 6)
 
 
 
