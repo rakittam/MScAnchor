@@ -1427,7 +1427,7 @@ set.seed(22416)
 
 nsim <- 100
 
-xi_values <- seq(0, 50, by = 1)
+xi_values <- seq(0, 50, by = 0.1)
 xi_values <- c(xi_values, 10000)
 
 

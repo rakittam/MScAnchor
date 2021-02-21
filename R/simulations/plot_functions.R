@@ -641,32 +641,38 @@ plot_fivi_XHY <- function(sim_data, xi_big = 10000) {
   print(gg1)
   invisible(list(mean_data_glare, mean_data_big))
   
-  
-  # gg2 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = mean_b)) +
-  #   
+  # gg_data_b <- rbind(gg_data, mean_data_big)
+  # 
+  # gg2 <- ggplot(gg_data_b, aes(y = mean_logLike_pert, x = mean_b)) +
+  # 
   #   geom_line() +
   #   geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
   #   geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
-  #   
-  #   ylab("0.9-quantile of -logLik") + 
+  # 
+  #   ylab("0.9-quantile of -logLik") +
   #   #xlab("b")
-  #   
+  # 
   #   scale_x_continuous(
-  #     
+  # 
   #     # Features of the first axis
   #     name = expression(hat(b)),
   #     # limits = c(-0.142,-0.020),
-  #     breaks = c(-0.300, -0.225, -0.150, -0.075, 0.000),
-  #     
+  #     breaks = c(0.2, 0.3, 0.4, 0.5),
+  # 
   #     # Add a second axis and specify its features
   #     sec.axis = sec_axis(trans= ~.,
   #                         name=expression(xi),
-  #                         breaks=c(-0.225, -0.150, -0.075),
-  #                         labels=c(  "2.6", "0.7", "0.2"))
-  #     
-  #     #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
-  #   ) 
-  
+  #                         breaks=c(0.2, 0.3, 0.4, 0.5, 0.562),
+  #                         labels=c("50", "4.1", "1.3", "0.3", "0"))
+  #   )
+  # 
+  # gg2
+  # 
+  # #bb <- 0.562
+  # #gg_data_b$xi[which(abs(gg_data_b$mean_b-bb)==min(abs(gg_data_b$mean_b-bb)))]
+  # ggsave(filename = "ex4sim1_b.pdf", plot = gg2, height = 4, width = 6)
+  # 
+  # 
   # Plots for LaTeX
   ggsave(filename = "ex4sim1.pdf", plot = gg1, height = 4, width = 6)
   
@@ -883,37 +889,8 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000,
   print(alpax)
   print(gg2)
   
-  
-  # # Example 3
-  # g1 <- ggplotGrob(gg3 +
-  #                    theme(legend.position = "none") +
-  #                    labs(x=element_blank(), y=element_blank()))
-  # alpax <- gg1+
-  #   annotation_custom(
-  #     grob = g1,
-  #     xmin = -0.05,
-  #     xmax = 0.8,
-  #     ymin = 1.8,
-  #     ymax = 3.7
-  #   )
-  # alpax
-  # 
-  # arr <- ggarrange(alpax, gg2,
-  #                  labels = c("A", "B"),
-  #                  ncol = 1, nrow = 2,
-  #                  font.label = list(face = "plain"))
-  # 
-  # # Plots for LaTeX
-  # ggsave(filename = "ex3sim4.pdf", plot = arr, height = 4, width = 6)
-  # 
-  # ggsave(filename = "ex3sim4.1.pdf", plot = alpax, height = 4, width = 6)
-  # ggsave(filename = "ex3sim4.2.pdf", plot = gg2, height = 4, width = 6)
-  # 
-  # print(alpax)
-  # print(gg2)
-
 # 
-#   # Example 4
+#   # Example 3
 #   g1 <- ggplotGrob(gg3 +
 #                      theme(legend.position = "none") +
 #                      labs(x=element_blank(), y=element_blank()))
@@ -921,9 +898,9 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000,
 #     annotation_custom(
 #       grob = g1,
 #       xmin = -0.05,
-#       xmax = 0.9,
-#       ymin = 7.5,
-#       ymax = 16.5
+#       xmax = 0.8,
+#       ymin = 1.8,
+#       ymax = 3.7
 #     )
 #   alpax
 # 
@@ -933,13 +910,42 @@ plot_quant <- function(sim_data, q_values, xi_big = 10000,
 #                    font.label = list(face = "plain"))
 # 
 #   # Plots for LaTeX
-#   ggsave(filename = "ex4sim4.pdf", plot = arr, height = 4, width = 6)
+#   ggsave(filename = "ex3sim4.pdf", plot = arr, height = 4, width = 6)
 # 
-#   ggsave(filename = "ex4sim4.1.pdf", plot = alpax, height = 4, width = 6)
-#   ggsave(filename = "ex4sim4.2.pdf", plot = gg2, height = 4, width = 6)
+#   ggsave(filename = "ex3sim4.1.pdf", plot = alpax, height = 4, width = 6)
+#   ggsave(filename = "ex3sim4.2.pdf", plot = gg2, height = 4, width = 6)
 # 
 #   print(alpax)
 #   print(gg2)
+
+# 
+  # # Example 4
+  # g1 <- ggplotGrob(gg3 +
+  #                    theme(legend.position = "none") +
+  #                    labs(x=element_blank(), y=element_blank()))
+  # alpax <- gg1+
+  #   annotation_custom(
+  #     grob = g1,
+  #     xmin = -0.05,
+  #     xmax = 0.9,
+  #     ymin = 7.5,
+  #     ymax = 16.5
+  #   )
+  # alpax
+  # 
+  # arr <- ggarrange(alpax, gg2,
+  #                  labels = c("A", "B"),
+  #                  ncol = 1, nrow = 2,
+  #                  font.label = list(face = "plain"))
+  # 
+  # # Plots for LaTeX
+  # ggsave(filename = "ex4sim4.pdf", plot = arr, height = 4, width = 6)
+  # 
+  # ggsave(filename = "ex4sim4.1.pdf", plot = alpax, height = 4, width = 6)
+  # ggsave(filename = "ex4sim4.2.pdf", plot = gg2, height = 4, width = 6)
+  # 
+  # print(alpax)
+  # print(gg2)
 
   # # Example 5
   # g1 <- ggplotGrob(gg3 +

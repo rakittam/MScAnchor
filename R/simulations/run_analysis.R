@@ -239,7 +239,7 @@ data_poi_X_quant <- sim_data_poi_X_quant$sim_data
 head(data_poi_X_quant)
 str(data_poi_X_quant)
 
-q_values <- seq(0, 1, by = 0.01)
+q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_poi_X_quant, q_values, xi_big = 10000)
 
 
@@ -370,14 +370,14 @@ plot_IV(IV_b_data, causal_parameter = 1)
 
 # sim4: Poisson IV several quantiles ---
 
-load("./data sets/simulation_study/ex2/2021-02-17/sim4.Rdata")
+load("./data sets/simulation_study/ex3/2021-02-19/sim4.Rdata")
 
 data_bin_X_quant <- sim_data_bin_X_quant$sim_data
 
 head(data_bin_X_quant)
 str(data_bin_X_quant)
 
-q_values <- seq(0, 1, by = 0.01)
+q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_bin_X_quant, q_values, xi_big = 10000)
 
 
@@ -485,7 +485,7 @@ data_poi_XHY_quant <- sim_data_poi_XHY_quant$sim_data
 head(data_poi_XHY_quant)
 str(data_poi_XHY_quant)
 
-q_values <- seq(0, 1, by = 0.01)
+q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 
 
