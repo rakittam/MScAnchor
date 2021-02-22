@@ -208,40 +208,40 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
     # 
   print(gg1)
   invisible(list(mean_data_glare, mean_data_big))
-  
-  # b-axis
-  gg_data_b <- rbind(gg_data, mean_data_big)
-  
-  gg2 <- ggplot(gg_data_b, aes(y = mean_loglike_pert, x = mean_b)) +
-
-    geom_line() +
-    geom_hline(yintercept = mean_data_big$mean_loglike_pert, linetype = "dashed") +
-    geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
-
-    ylab("0.9-quantile of -loglik") 
-    #xlab("b")
-
-    scale_x_continuous(
-
-
-
-      # features of the first axis
-      name = expression(hat(b)),
-
-      # add a second axis and specify its features
-      sec.axis = sec_axis(trans= ~.,
-                          name=expression(xi),
-                          breaks=c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75),
-                          labels=sapply(c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75), axis_function))
-
-      #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
-    )
-  
-  gg2
-  
-  bb <- 0.55
-  gg_data_b$xi[which(abs(gg_data_b$mean_b-bb)==min(abs(gg_data_b$mean_b-bb)))]
-  ggsave(filename = "ex4sim1_b.pdf", plot = gg2, height = 4, width = 6)
+  # 
+  # # b-axis
+  # gg_data_b <- rbind(gg_data, mean_data_big)
+  # 
+  # gg2 <- ggplot(gg_data_b, aes(y = mean_loglike_pert, x = mean_b)) +
+  # 
+  #   geom_line() +
+  #   geom_hline(yintercept = mean_data_big$mean_loglike_pert, linetype = "dashed") +
+  #   geom_vline(xintercept = gg_data$mean_b[gg_data$xi == 0], linetype = "dashed") +
+  # 
+  #   ylab("0.9-quantile of -loglik") 
+  #   #xlab("b")
+  # 
+  #   scale_x_continuous(
+  # 
+  # 
+  # 
+  #     # features of the first axis
+  #     name = expression(hat(b)),
+  # 
+  #     # add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name=expression(xi),
+  #                         breaks=c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75),
+  #                         labels=sapply(c(0.50, 0.55, 0.60, 0.65, 0.70, 0.75), axis_function))
+  # 
+  #     #mean_data_glare$xi[which(abs(mean_data_glare$mean_b-0.54375)==min(abs(mean_data_glare$mean_b-0.54375)))]
+  #   )
+  # 
+  # gg2
+  # 
+  # bb <- 0.55
+  # gg_data_b$xi[which(abs(gg_data_b$mean_b-bb)==min(abs(gg_data_b$mean_b-bb)))]
+  # ggsave(filename = "ex4sim1_b.pdf", plot = gg2, height = 4, width = 6)
   
   # # b-axis
   # gg_data_b <- rbind(gg_data, mean_data_big)

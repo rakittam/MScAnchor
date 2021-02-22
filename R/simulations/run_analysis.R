@@ -348,7 +348,7 @@ load("./data sets/simulation_study/ex3/2021-02-19/sim2.Rdata")
 data_bin_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
 colnames(data_bin_X_fixi) <- c("rep", "v", "xi",
                                "b", "se", "logLik_pert", "deviance", "pearson")
-for (i in 1:nsim) {
+for (i in 1:100) {
   
   data_temp <- sim_data_bin_X_fixi[[i]][["data"]][["data"]]
   
@@ -359,7 +359,57 @@ head(data_bin_X_fixi)
 summary(data_bin_X_fixi)
 
 # Plot Quantile of log-likelihood and with residuals
-plot_fixi(data_bin_X_fixi)
+#plot_fixi(data_bin_X_fixi)
+
+# Investigate different quantiles
+
+alpha <- 0.9
+
+quantile_data <- data.frame(matrix(nrow = 0, ncol = 6))
+colnames(quantile_data) <- c("rep", "v", "xi", "logLik_pert", "deviance", "pearson")
+
+for (i in 1:nsim) {
+  
+  data_temp <- sim_data_bin_X_fixi[[i]][["data"]][["indv"]]
+  
+  vlen <- length(data_temp)
+  
+  for (s in 1:vlen) {
+    
+    # Log-Likelihood
+    logLik <- apply(data_temp[[s]][[1]], 1, function(x) quantile(x, probs = alpha))
+    
+    # Deviance Residuals
+    # deviance <- apply(data_temp[[s]][[2]], 1, function(x) quantile(x, probs = alpha))
+    deviance <- sqrt(apply(data_temp[[s]][[2]]^2, 1, function(x) quantile(x, probs = alpha)))
+    
+    # Pearson Residuals
+    # pearson <- apply(data_temp[[s]][[3]], 1, function(x) quantile(x, probs = alpha))
+    pearson <- sqrt(apply(data_temp[[s]][[3]]^2, 1, function(x) quantile(x, probs = alpha)))
+    
+    temp <- data.frame(rep = i, v = data_temp[[s]][[5]], xi = data_temp[[s]][[4]],
+                       logLik_pert = logLik, deviance = deviance, pearson = pearson)
+    
+    quantile_data <- rbind(quantile_data, temp)
+  }
+  
+  data_temp$logLik
+  
+  data_bin_X_fixi <- rbind(data_bin_X_fixi, data_temp)
+}
+
+quantile_data_chosen <-
+  quantile_data[quantile_data$xi %in% c(0, 1, 3, 5, 10000), ]
+
+plot_fixi(quantile_data_chosen)
+
+
+
+
+
+
+
+
 
 # sim3: Binomial IV identifiability ---
 
@@ -368,7 +418,7 @@ load("./data sets/simulation_study/ex3/2021-01-18/sim3.Rdata")
 IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = 1)
 
-# sim4: Poisson IV several quantiles ---
+# sim4: Binomial IV several quantiles ---
 
 load("./data sets/simulation_study/ex3/2021-02-19/sim4.Rdata")
 
