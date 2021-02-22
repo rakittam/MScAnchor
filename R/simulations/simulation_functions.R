@@ -1104,7 +1104,9 @@ set.seed(35732)
 nsim <- 100
 
 xi_values <- seq(0, 10, by = 0.1)
-xi_values <- c(xi_values, 10000)
+#xi_values <- c(xi_values, 10000)
+xi_values2 <- seq(20, 250, by = 10)
+xi_values <- c(xi_values, xi_values2, 10000)
 
 # Simulate
 sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
