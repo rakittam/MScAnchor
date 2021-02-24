@@ -143,7 +143,7 @@ arr
 
 # sim1: Poisson IV with fixed v ---
 
-load("./data sets/simulation_study/ex2/2021-02-18/sim1.Rdata")
+load("./data sets/simulation_study/ex2/2021-02-22/sim1.Rdata")
 
 data_poi_X_states_fivi <- sim_data_poi_X_fivi$states
 data_poi_X_fivi <- sim_data_poi_X_fivi$sim_data
@@ -179,7 +179,7 @@ summary(data_poi_X_fixi)
 poi_X_fixi_chosen <-
   data_poi_X_fixi[data_poi_X_fixi$xi %in% c(0, 1, 3, 5, 10000), ]
 
-plot_fixi(poi_X_fixi_chosen)
+#plot_fixi(poi_X_fixi_chosen)
 
 # Investigate different quantiles
 
@@ -413,7 +413,7 @@ plot_fixi(quantile_data_chosen)
 
 # sim3: Binomial IV identifiability ---
 
-load("./data sets/simulation_study/ex3/2021-01-18/sim3.Rdata")
+load("./data sets/simulation_study/ex3/2021-02-19/sim3.Rdata")
 
 IV_b_data <- IV_b_bin$sim_data
 plot_IV(IV_b_data, causal_parameter = 1)
@@ -516,7 +516,7 @@ arr
 
 # sim1: Poisson with Anchor on X, H and Y fixed v ---
 
-load("./data sets/simulation_study/ex4/2021-02-19/sim1.Rdata")
+load("./data sets/simulation_study/ex4/2021-02-21/sim1.Rdata")
 
 data_poi_XHY_fivi_states <- sim_data_poi_XHY_fivi$states
 data_poi_XHY_fivi <- sim_data_poi_XHY_fivi$sim_data
@@ -540,6 +540,167 @@ plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 
 
 # ex5: Label Noise Example ----------------------------------------------------
+
+# Define variables for unperturbed and perturbed data set
+def_LN <- defData(varname = "A", dist = "normal", 
+                  formula = 0, variance = 0.01)
+def_LN <- defData(def_LN, varname = "C", dist = "binomial", link = "logit",
+                  formula = "-2 + A", variance = 1)
+def_LN <- defData(def_LN, varname = "H", dist = "normal",
+                  formula = 0, variance = 0.01)
+def_LN <- defData(def_LN, varname = "X", dist = "normal", 
+                  formula = "2 * H", variance = 0.01)
+def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
+                  formula = "-1 + 0.4 * X + 1 * H", variance = 1)
+def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
+                  formula = "abs(Yorg - C)")
+
+def_LN_pert <- defData(varname = "A", dist = "normal", 
+                       formula = 0, variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "v", 
+                       formula = 0.8) # set perturbation strength
+def_LN_pert <- defData(def_LN_pert, varname = "C", dist = "binomial", link = "logit",
+                       formula = "-2 + v", variance = 1)
+def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
+                       formula = 0, variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
+                       formula = "2 * H", variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+                       formula = "-1 + 0.4 * X + 1 * H", variance = 1)
+def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
+                       formula = "abs(Yorg - C)")
+
+# sim0: General ---
+
+set.seed(68465)
+# Distribution histogram
+# Parameters of linear predictor
+b <- 0.4
+h <- 1
+c <- -1
+
+t <- -2
+v_pert <- 0.8
+
+# Distribution histogram
+dd <- genData(1000, def_LN)
+dd_pert <- genData(1000, def_LN_pert)
+
+eta <- c + b * dd$X + h * dd$H
+eta_pert <- c + b * dd_pert$X + h * dd_pert$H
+
+tau <- t + dd$A
+tau_pert <- t + v_pert
+exp(tau_pert)/(1+exp(tau_pert))
+
+
+gg_hist <- data.frame(tau = c(tau, rep(tau_pert, 1000)),
+                      mu = c(exp(tau)/(1+exp(tau)), rep(exp(tau_pert)/(1+exp(tau_pert)),1000)),
+                      C = c(dd$C, dd_pert$C),
+                      data = c(rep("unpert", length(tau)),
+                               rep("pert", length(tau))))
+
+gg_hist <- data.frame(tau = tau,
+                      mu = exp(tau)/(1+exp(tau)),
+                      C = dd$C,
+                      data = rep("unpert", length(tau)))
+
+gg_bar <- data.frame(C = c(dd$C, dd_pert$C),
+                     data = c(rep("unpert", length(tau)),
+                              rep("pert", length(tau))))
+# tau plot
+phist <- gghistogram(
+  gg_hist, x = "mu", 
+  add = "mean", rug = FALSE,
+  fill = "data", palette = c("#00AFBB"),
+  bins = 30
+) + xlab(expression(p[C])) + rremove("legend")
+
+pdensity <- ggdensity(
+  gg_hist, x = "mu", 
+  color= "data", palette = c( "#00AFBB"),
+  alpha = 0,
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  theme_half_open(11, rel_small = 1) +
+  rremove("x.axis")+
+  rremove("xlab") +
+  rremove("x.text") +
+  rremove("x.ticks") +
+  rremove("legend") +
+  annotate("text", label= expression(p[C]^pert), colour = 1, x = 0.143, y = 25) +
+  annotate("text", label= "= 0.231", colour = 1, x = 0.1503, y = 24.8)
+
+aligned_plots <- align_plots(phist, pdensity, align="hv", axis="tblr")
+gg_tau <- ggdraw(aligned_plots[[1]]) + draw_plot(aligned_plots[[2]])
+
+# C plot
+gg_C <- ggplot(gg_bar, aes(C, fill = data)) + 
+  geom_bar(position = 'identity', alpha = .4) +
+  scale_fill_manual("data", values = c("pert" = "#FF6666", "unpert" = "#00AFBB"))
+
+arr <- ggarrange(gg_tau, gg_C,
+                 labels = c("A", "B"),
+                 font.label = list(face = "plain"),
+                 ncol = 1, nrow = 2, common.legend = TRUE)
+arr
+
+#ggsave(filename = "exLNhist.pdf", plot = arr, height = 4, width = 6)
+
+
+
+
+# Parameters of linear predictor
+b <- 0.4
+h <- 1
+c <- -1
+
+t <- -2
+v_pert <- 0.8
+
+# Distribution histogram
+dd <- genData(1000, def_LN)
+dd_pert <- genData(1000, def_LN_pert)
+
+eta <- c + b * dd$X + h * dd$H
+eta_pert <- c + b * dd_pert$X + h * dd_pert$H
+
+tau <- t + dd$A
+tau_pert <- t + v_pert
+
+par(mfrow = c(3,3))
+hist(tau, breaks = 100)
+hist(exp(tau)/(1+exp(tau)), breaks = 100)
+hist(dd$B, breaks = 100)
+hist(eta, breaks = 100)
+hist(exp(eta)/(1+exp(eta)), breaks = 100)
+hist(dd$Yorg, breaks = 100)
+hist(dd$Y, breaks = 100)
+
+par(mfrow = c(3,3))
+hist(tau_pert, breaks = 100)
+hist(exp(tau_pert)/(1+exp(tau_pert)), breaks = 100)
+hist(dd_pert$B, breaks = 100)
+hist(eta_pert, breaks = 100)
+hist(exp(eta_pert)/(1+exp(eta_pert)), breaks = 100)
+hist(dd_pert$Yorg, breaks = 100)
+hist(dd_pert$Y, breaks = 100)
+
+exp(tau_pert)/(1+exp(tau_pert))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # sim1: Label Noise with fixed v ---
 
@@ -607,6 +768,131 @@ q_values <- seq(0, 1, by = 0.01)
 plot_quant(data_LN_quant, q_values, xi_big = 10000)
 
 # ex6: Label Noise Example ----------------------------------------------------
+
+# Define variables for unperturbed and perturbed data set
+def_LN <- defData(varname = "A", dist = "normal", 
+                  formula = 0, variance = 0.01)
+def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
+                  formula = "-2 + A", variance = 1)
+def_LN <- defData(def_LN, varname = "H", dist = "normal",
+                  formula = "A", variance = 0.01)
+def_LN <- defData(def_LN, varname = "X", dist = "normal", 
+                  formula = "2 * H + A", variance = 0.01)
+def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
+                  formula = "-1 + 0.4 * X + 1 * H", variance = 1)
+def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
+                  formula = "abs(Yorg - B)")
+
+def_LN_pert <- defData(varname = "A", dist = "normal", 
+                       formula = 0, variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "v", 
+                       formula = 0.6) # set perturbation strength
+def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
+                       formula = "-2 + v", variance = 1)
+def_LN_pert <- defData(def_LN_pert, varname = "vH", 
+                       formula = 0.4) # set perturbation strength
+def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
+                       formula = "vH", variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "vX", 
+                       formula = -0.5) # set perturbation strength
+def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
+                       formula = "2 * H + vX", variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+                       formula = "-1 + 0.4 * X + 1 * H", variance = 1)
+def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
+                       formula = "abs(Yorg - B)")
+
+# Parameters of linear predictor
+b <- 0.4
+h <- 1
+c <- -1
+
+t <- -2
+v_pert <- 0.6
+
+# Distribution histogram
+dd <- genData(1000, def_LN)
+dd_pert <- genData(1000, def_LN_pert)
+
+eta <- c + b * dd$X + h * dd$H
+eta_pert <- c + b * dd_pert$X + h * dd_pert$H
+
+tau <- t + dd$A
+tau_pert <- t + v_pert
+
+par(mfrow = c(3,3))
+hist(tau, breaks = 100)
+hist(exp(tau)/(1+exp(tau)), breaks = 100)
+hist(dd$B, breaks = 100)
+hist(eta, breaks = 100)
+hist(exp(eta)/(1+exp(eta)), breaks = 100)
+hist(dd$Yorg, breaks = 100)
+hist(dd$Y, breaks = 100)
+
+par(mfrow = c(3,3))
+hist(tau_pert, breaks = 100)
+hist(exp(tau_pert)/(1+exp(tau_pert)), breaks = 100)
+hist(dd_pert$B, breaks = 100)
+hist(eta_pert, breaks = 100)
+hist(exp(eta_pert)/(1+exp(eta_pert)), breaks = 100)
+hist(dd_pert$Yorg, breaks = 100)
+hist(dd_pert$Y, breaks = 100)
+
+exp(tau_pert)/(1+exp(tau_pert))
+
+# sim0: histograms and bar plots
+gg_hist <- data.frame(tau = tau,
+                      mu = exp(tau)/(1+exp(tau)),
+                      data = rep("unpert", length(tau)))
+
+gg_bar <- data.frame(B = c(dd$B, dd_pert$B),
+                     data = c(rep("unpert", length(tau)),
+                              rep("pert", length(tau))))
+# tau plot
+phist <- gghistogram(
+  gg_hist, x = "mu", 
+  add = "mean", rug = FALSE,
+  fill = "data", palette = c("#00AFBB"),
+  bins = 30
+) + xlab(expression(p[C])) + rremove("legend")
+
+pdensity <- ggdensity(
+  gg_hist, x = "mu", 
+  color= "data", palette = c( "#00AFBB"),
+  alpha = 0,
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  theme_half_open(11, rel_small = 1) +
+  rremove("x.axis")+
+  rremove("xlab") +
+  rremove("x.text") +
+  rremove("x.ticks") +
+  rremove("legend") +
+  #annotate("text", label= expression(p[C]^pert), colour = 1, x = 0.143, y = 25) +
+  #annotate("text", label= "= 0.198", colour = 1, x = 0.1503, y = 24.8)
+  annotate(geom = 'text', x = 0.145, y = 25,
+             label = "p[C]^pert %~~% 0.198",
+             parse = TRUE)
+
+aligned_plots <- align_plots(phist, pdensity, align="hv", axis="tblr")
+gg_tau <- ggdraw(aligned_plots[[1]]) + draw_plot(aligned_plots[[2]])
+
+# B plot
+gg_C <- ggplot(gg_bar, aes(B, fill = data)) + 
+  geom_bar(position = 'identity', alpha = .4) +
+  scale_fill_manual("data", values = c("pert" = "#FF6666", "unpert" = "#00AFBB"))
+
+arr <- ggarrange(gg_tau, gg_C,
+                 labels = c("A", "B"),
+                 font.label = list(face = "plain"),
+                 ncol = 1, nrow = 2, common.legend = TRUE)
+arr
+
+ggsave(filename = "exLNhist.pdf", plot = arr, height = 4, width = 6)
+
+
+
+
 
 # sim1: Label Noise with fixed v ---
 

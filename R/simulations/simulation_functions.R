@@ -38,6 +38,8 @@ onerep_rot <- function(rep, nobs = 300, data_table, data_pert_table,
   MSE_pert_dev <- numeric(length(xi_values))
   MSE_pert_pea <- numeric(length(xi_values))
   
+  max_y_hat_diff <- matrix(nrow = length(xi_values), ncol = 1)
+  
   for (i in 1:length(xi_values)) {
     
     xi <- xi_values[i]
@@ -91,6 +93,13 @@ onerep_rot <- function(rep, nobs = 300, data_table, data_pert_table,
                                             type = "response",
                                             newdata = dd_pert)
       MSE_pert_pea[i] <- mean((resid_pert_pea)^2)
+      
+      
+      # estimate comparance:
+      y_hat_ar <- b_ar[i] * dd_pert$X
+      y_hat_dev <- b_dev[i] * dd_pert$X
+      
+      max_y_hat_diff[i] <- max(abs(y_hat_ar - y_hat_dev))
     }
   }
   
@@ -106,7 +115,8 @@ onerep_rot <- function(rep, nobs = 300, data_table, data_pert_table,
              b_pea_se = b_pea_se,
              MSE_pert_ar = MSE_pert_ar,
              MSE_pert_dev = MSE_pert_dev,
-             MSE_pert_pea = MSE_pert_pea)
+             MSE_pert_pea = MSE_pert_pea,
+             max_y_hat_diff = max_y_hat_diff)
 }
 
 # Define simulation function
@@ -117,12 +127,13 @@ simulate_rot <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
   xi_len <- length(xi_values) + 1
   
   states <- array(dim = c(nsim, 626))
-  sim_data <- data.frame(matrix(nrow = nsim * xi_len, ncol = 12))
+  sim_data <- data.frame(matrix(nrow = nsim * xi_len, ncol = 13))
   colnames(sim_data) <- c("rep", "xi", "gamma",
                           "b_ar", "se_ar",
                           "b_dev", "se_dev",
                           "b_pea", "se_pea",
-                          "MSE_pert_ar", "MSE_pert_dev", "MSE_pert_pea")
+                          "MSE_pert_ar", "MSE_pert_dev", "MSE_pert_pea",
+                          "max_y_hat_diff")
   
   pb <- txtProgressBar(min = 0, max = nsim, style = 3)
   for (r in 1:nsim) {
@@ -1004,6 +1015,27 @@ sim_data_rot <- simulate_rot(nsim = nsim, nobs = 1000,
                              formula = formula, A_formula = A_formula,
                              family = family)
 
+# yhat diff 
+temp_data <- sim_data_rot$sim_data
+# # Save simulated data list
+# path_name <- "./data sets/simulation_study/ex1/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(temp_data, file = paste(paste(path_name, Sys.Date(), sep = ""), "/temp_data_yhat_diff.Rdata", sep =""))
+
+xi_vec <- c(xi_values, xi_big)
+max_y_diff <- matrix(nrow = length(xi_vec))
+b_vec <- matrix(nrow = length(xi_vec))
+for (i in 1:length(xi_vec)) {
+  xi <- xi_vec[i]
+  
+  b_vec[i] <- mean(temp_data$b_ar[temp_data$xi==xi])
+  max_y_diff[i] <- mean(temp_data$max_y_hat_diff[temp_data$xi==xi])
+  
+}
+
+plot(b_vec, max_y_diff)
+
+
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
@@ -1217,7 +1249,7 @@ def_bin_X <- defData(def_bin_X, varname = "Y", dist = "binomial", link = "logit"
 def_bin_X_pert <- defData(varname = "A", dist = "normal", 
                           formula = 0, variance = 0.25)
 def_bin_X_pert <- defData(def_bin_X_pert, varname = "v", 
-                          formula = 3) # set perturbation strength
+                          formula = 8) # set perturbation strength
 def_bin_X_pert <- defData(def_bin_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_bin_X_pert <- defData(def_bin_X_pert, varname = "X", dist = "normal", 
@@ -1229,7 +1261,24 @@ def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial", link
 b <- 0.4
 h <- 1
 
-v <- 3
+v <- 8
+
+
+
+fit_temp <- glare(formula = formula,
+                  A_formula = A_formula,
+                  data = dd,
+                  xi = 0,
+                  family = family,
+                  type = type)
+fit_temp2 <- glare(formula = formula,
+                   A_formula = A_formula,
+                   data = dd,
+                   xi = 5,
+                   family = family,
+                   type = type)
+
+predict(fit_temp2, type = "response")
 
 # Distribution histogram
 dd <- genData(300, def_bin_X)
@@ -1310,12 +1359,9 @@ set.seed(58435)
 nsim <- 100
 
 
-# nobs_values <- c(300, 1000, 5000, 10000)
-
-nobs_values <- c(seq(10, 100, by = 10),
-                 seq(100, 5000, by = 100)[-1]) # (37 fehler)
-
 nobs_values <- seq(100, 5000, by = 100)
+
+#nobs_values <- c(100, 1000, 5000, 10000)
 
 # xi_values <- seq(0, 100, by = 10)
 xi_values <- c(0, 1, 3, 10, 10000)
@@ -1476,123 +1522,83 @@ sim_data_poi_XHY_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
 
 # ex5: Label Noise Example ----------------------------------------------------
 
-# Define variables for unperturbed and perturbed data set
-def_LN <- defData(varname = "A", dist = "normal", 
-                  formula = 0, variance = 0.25)
-def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-                  formula = "-1 + A", variance = 1)
-def_LN <- defData(def_LN, varname = "H", dist = "normal",
-                  formula = 2, variance = 0.25)
-def_LN <- defData(def_LN, varname = "X", dist = "normal", 
-                  formula = "- 3 * H", variance = 0.25)
-def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-                  formula = "1 * X + 2 * H", variance = 1)
-def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
-                  formula = "abs(Yorg - B)")
+# # Define variables for unperturbed and perturbed data set
+# def_LN <- defData(varname = "randA", dist = "binary",
+#                   formula = 0.5)
+# def_LN <- defData(def_LN, varname = "A", 
+#                   formula = "2 * randA - 1")
+# def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
+#                   formula = "0.6 + A", variance = 1)
+# def_LN <- defData(def_LN, varname = "H", dist = "normal",
+#                   formula = 0, variance = 0.01)
+# def_LN <- defData(def_LN, varname = "X", dist = "normal", 
+#                   formula = "2 * H", variance = 0.01)
+# def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
+#                   formula = "1 + 0.4 * X + 1 * H", variance = 1)
+# def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
+#                   formula = "abs(Yorg - B)")
+# 
+# def_LN_pert <- defData(varname = "randA", dist = "binary",
+#                        formula = 0.5)
+# def_LN_pert <- defData(def_LN_pert, varname = "A", 
+#                        formula = "2 * randA - 1")
+# def_LN_pert <- defData(def_LN_pert, varname = "v", 
+#                        formula = 0.25) # set perturbation strength
+# def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
+#                        formula = "0.6 + v", variance = 1)
+# def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
+#                        formula = 0, variance = 0.01)
+# def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
+#                        formula = "2 * H", variance = 0.01)
+# def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+#                        formula = "1 + 0.4 * X + 1 * H", variance = 1)
+# def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
+#                        formula = "abs(Yorg - B)")
+# 
+# # Parameters of linear predictor
+# b <- 0.4
+# h <- 1
+# c <- 1
+# 
+# t <- 0.6
+# v_pert <- 0.25
 
-def_LN_pert <- defData(varname = "A", dist = "normal", 
-                       formula = 0, variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "v", 
-                       formula = 2) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-                       formula = "-1 + v * A", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
-                       formula = 2, variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
-                       formula = "- 3 * H", variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-                       formula = "1 * X + 2 * H", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
-                       formula = "abs(Yorg - B)")
-
-
-
-####
 # Define variables for unperturbed and perturbed data set
 def_LN <- defData(varname = "A", dist = "normal", 
                   formula = 0, variance = 0.01)
 def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-                  formula = "0.6 + A", variance = 1)
+                  formula = "-2 + A", variance = 1)
 def_LN <- defData(def_LN, varname = "H", dist = "normal",
                   formula = 0, variance = 0.01)
 def_LN <- defData(def_LN, varname = "X", dist = "normal", 
                   formula = "2 * H", variance = 0.01)
 def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-                  formula = "1 + 0.4 * X + 1 * H", variance = 1)
+                  formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
                   formula = "abs(Yorg - B)")
 
 def_LN_pert <- defData(varname = "A", dist = "normal", 
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
-                       formula = -1.7) # set perturbation strength
+                       formula = 0.8) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-                       formula = "0.6 + v", variance = 1)
+                       formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
                        formula = "2 * H", variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-                       formula = "1 + 0.4 * X + 1 * H", variance = 1)
+                       formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - B)")
 
 # Parameters of linear predictor
 b <- 0.4
 h <- 1
-c <- 1
+c <- -1
 
-t <- 0.6
-v_pert <- -1.7
-####
-
-
-
-
-
-
-
-
-# Define variables for unperturbed and perturbed data set
-def_LN <- defData(varname = "randA", dist = "binary",
-                  formula = 0.5)
-def_LN <- defData(def_LN, varname = "A", 
-                  formula = "2 * randA - 1")
-def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-                  formula = "0.6 + A", variance = 1)
-def_LN <- defData(def_LN, varname = "H", dist = "normal",
-                  formula = 0, variance = 0.01)
-def_LN <- defData(def_LN, varname = "X", dist = "normal", 
-                  formula = "2 * H", variance = 0.01)
-def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-                  formula = "1 + 0.4 * X + 1 * H", variance = 1)
-def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
-                  formula = "abs(Yorg - B)")
-
-def_LN_pert <- defData(varname = "randA", dist = "binary",
-                       formula = 0.5)
-def_LN_pert <- defData(def_LN_pert, varname = "A", 
-                       formula = "2 * randA - 1")
-def_LN_pert <- defData(def_LN_pert, varname = "v", 
-                       formula = 0.25) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-                       formula = "0.6 + v", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
-                       formula = 0, variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
-                       formula = "2 * H", variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-                       formula = "1 + 0.4 * X + 1 * H", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
-                       formula = "abs(Yorg - B)")
-
-# Parameters of linear predictor
-b <- 0.4
-h <- 1
-c <- 1
-
-t <- 0.6
-v_pert <- 0.25
+t <- -2
+v_pert <- 0.8
 
 # Distribution histogram
 dd <- genData(1000, def_LN)
@@ -1700,11 +1706,11 @@ sim_data_LN_fixi_glm <- simulate_fixi(nsim = nsim, nobs = 1000,
 
 set.seed(16541)
 
-nsim <- 10
+nsim <- 100
 
-xi_values <- seq(0, 100, by = 1)
+# xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
 
-xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
+xi_values <- seq(0, 10, by = 0.1)
 
 xi_big <- 10000
 
@@ -1715,6 +1721,11 @@ sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                          data_pert_table = data_pert_table, 
                                          formula = formula, A_formula = A_formula,
                                          family = family, type = type) 
+
+# # Save data
+# path_name <- "./data sets/simulation_study/ex5/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 
 data_LN_quant <- sim_data_LN_quant$sim_data
 
@@ -1740,6 +1751,10 @@ sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                              data_pert_table = data_pert_table_raw, 
                                              formula = formula, A_formula = A_formula,
                                              family = family, type = type) 
+# # Save data
+# path_name <- "./data sets/simulation_study/ex5/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
 
 data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
 
@@ -1896,127 +1911,44 @@ plot_quant(data_LN_quant_raw, q_values, xi_big = 10000, glm_quantile_vector_raw)
 
 # Define variables for unperturbed and perturbed data set
 def_LN <- defData(varname = "A", dist = "normal", 
-                  formula = 1, variance = 0.25)
-def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-                  formula = "-1.5 + 0.5 * A", variance = 1)
-def_LN <- defData(def_LN, varname = "H", dist = "normal",
-                  formula = 1, variance = 0.25)
-def_LN <- defData(def_LN, varname = "X", dist = "normal", 
-                  formula = "1 * H - 2 * A", variance = 0.25)
-def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-                  formula = "0.5 * X + 1.5 * H", variance = 1)
-def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
-                  formula = "abs(Yorg - B)")
-
-def_LN_pert <- defData(varname = "A", dist = "normal", 
-                       formula = 1, variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "v", 
-                       formula = 1) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-                       formula = "-1.5 + v * A", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
-                       formula = 1, variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "vX", 
-                       formula = -1) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
-                       formula = "1 * H + vX * A", variance = 0.25)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-                       formula = "0.5 * X + 1.5 * H", variance = 1)
-def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
-                       formula = "abs(Yorg - B)")
-
-# Parameters of linear predictor
-b <- 0.5
-h <- 1.5
-
-t <- -1.5
-v <- 0.5
-v_pert <- 1
-
-# Distribution histogram
-dd <- genData(300, def_LN)
-dd_pert <- genData(300, def_LN_pert)
-
-par(mfrow = c(2,3))
-hist(t+v*dd$A, breaks = 100)
-hist(exp(t+v*dd$A)/(1+exp(t+v*dd$A)), breaks = 100)
-hist(dd$B, breaks = 100)
-hist(dd$Yorg, breaks = 100)
-hist(dd$Y, breaks = 100)
-
-par(mfrow = c(2,3))
-hist(t+v_pert*dd_pert$A, breaks = 100)
-hist(exp(t+v_pert*dd_pert$A)/(1+exp(t+v_pert*dd_pert$A)), breaks = 100)
-hist(dd_pert$B, breaks = 100)
-hist(dd_pert$Yorg, breaks = 100)
-hist(dd_pert$Y, breaks = 100)
-
-# Initialize
-data_table <- def_LN
-data_pert_table <- def_LN_pert
-formula <- Y ~ X - 1
-A_formula <- ~ A - 1
-family <- "binomial"
-type <- "deviance"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Define variables for unperturbed and perturbed data set
-def_LN <- defData(varname = "A", dist = "normal", 
                   formula = 0, variance = 0.01)
 def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-                  formula = "0.6 + A", variance = 1)
+                  formula = "-2 + A", variance = 1)
 def_LN <- defData(def_LN, varname = "H", dist = "normal",
                   formula = "A", variance = 0.01)
 def_LN <- defData(def_LN, varname = "X", dist = "normal", 
-                  formula = "2 * H", variance = 0.01)
+                  formula = "2 * H + A", variance = 0.01)
 def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-                  formula = "1 + 0.4 * X + 1 * H", variance = 1)
+                  formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
                   formula = "abs(Yorg - B)")
 
 def_LN_pert <- defData(varname = "A", dist = "normal", 
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
-                       formula = -1.7) # set perturbation strength
+                       formula = 0.6) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-                       formula = "0.6 + v", variance = 1)
+                       formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "vH", 
-                       formula = -1) # set perturbation strength
+                       formula = 0.4) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
                        formula = "vH", variance = 0.01)
+def_LN_pert <- defData(def_LN_pert, varname = "vX", 
+                       formula = -0.5) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
-                       formula = "2 * H", variance = 0.01)
+                       formula = "2 * H + vX", variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-                       formula = "1 + 0.4 * X + 1 * H", variance = 1)
+                       formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - B)")
 
 # Parameters of linear predictor
 b <- 0.4
 h <- 1
-c <- 1
+c <- -1
 
-t <- 0.6
-v_pert <- -1.7
+t <- -2
+v_pert <- 0.6
 
 # Distribution histogram
 dd <- genData(1000, def_LN)
@@ -2087,17 +2019,15 @@ plot_fivi_X(data_LN_fivi)
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
 # save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
 
-
-
 # sim4: Label Noise several quantiles ---
 
-set.seed(423570)
+set.seed(321459)
 
-nsim <- 10
+nsim <- 100
 
-xi_values <- seq(0, 100, by = 1)
+# xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
 
-xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
+xi_values <- seq(0, 10, by = 0.1)
 
 xi_big <- 10000
 
@@ -2108,6 +2038,11 @@ sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                          data_pert_table = data_pert_table, 
                                          formula = formula, A_formula = A_formula,
                                          family = family, type = type) 
+
+# # Save data
+# path_name <- "./data sets/simulation_study/ex6/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 
 data_LN_quant <- sim_data_LN_quant$sim_data
 
@@ -2124,7 +2059,7 @@ plot_quant(data_LN_quant, q_values, xi_big = 10000)
 data_pert_table_raw <- updateDef(data_pert_table,
                                  changevar = "Y",
                                  newformula = "Yorg")
-set.seed(120576)
+set.seed(120938)
 
 # Simulate
 sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
@@ -2133,6 +2068,10 @@ sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
                                              data_pert_table = data_pert_table_raw, 
                                              formula = formula, A_formula = A_formula,
                                              family = family, type = type) 
+# # Save data
+# path_name <- "./data sets/simulation_study/ex6/"
+# dir.create(paste(path_name, Sys.Date(), sep = ""))
+# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
 
 data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
 
@@ -2141,172 +2080,6 @@ data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
 
 q_values <- seq(0, 1, by = 0.01)
 plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# sim4: Label Noise several quantiles ---
-
-set.seed(44652)
-
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- xi_values[-1]
-xi_big <- 10000
-
-# Simulate
-sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                         xi_values = xi_values, xi_big = xi_big,
-                                         data_table = data_table,
-                                         data_pert_table = data_pert_table, 
-                                         formula = formula, A_formula = A_formula,
-                                         family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex6/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
-
-set.seed(55612)
-
-# Simulate
-sim_data_LN_quant_glm <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
-                                                 xi_values = 0, xi_big = xi_big,
-                                                 data_table = data_table,
-                                                 data_pert_table = data_pert_table, 
-                                                 formula =  Y ~ X + A - 1,
-                                                 A_formula = A_formula,
-                                                 family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex6/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm.Rdata", sep =""))
-
-data_LN_quant <- sim_data_LN_quant$sim_data
-
-head(data_LN_quant)
-str(data_LN_quant)
-
-q_values <- seq(0, 1, by = 0.01)
-#plot_quant(data_LN_quant, q_values, xi_big = 10000)
-
-# Plot with glm(Y~X+A-1)
-data_LN_quant_glm <- sim_data_LN_quant_glm$sim_data
-
-q_len <- length(q_values)
-
-quantile_array <- matrix(nrow = nsim, ncol = q_len)
-
-for (i in 1:nsim) {
-  for (q in 1:q_len) {
-    quant <- q_values[q]
-    
-    quantile_array[i, q] <- 
-      as.numeric(quantile(data_LN_quant_glm[[i]][[2]][, 2], quant))
-    
-  }
-}
-glm_quantile_vector <- apply(quantile_array, 2, mean)
-
-plot_quant(data_LN_quant, q_values, xi_big = 10000, glm_quantile_vector)
-
-
-# Prediction on Y_org
-data_pert_table_raw <- updateDef(data_pert_table,
-                                 changevar = "Y",
-                                 newformula = "Yorg")
-
-set.seed(44652)
-
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- xi_values[-1]
-xi_big <- 10000
-
-
-# Simulate
-sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                             xi_values = xi_values, xi_big = xi_big,
-                                             data_table = data_table,
-                                             data_pert_table = data_pert_table_raw, 
-                                             formula = formula, A_formula = A_formula,
-                                             family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex6/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
-
-set.seed(55612)
-
-# Simulate
-sim_data_LN_quant_glm_raw <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
-                                                     xi_values = 0, xi_big = xi_big,
-                                                     data_table = data_table,
-                                                     data_pert_table = data_pert_table_raw, 
-                                                     formula =  Y ~ X + A - 1,
-                                                     A_formula = A_formula,
-                                                     family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex6/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_glm_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm_raw.Rdata", sep =""))
-
-data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
-
-head(data_LN_quant_raw)
-str(data_LN_quant_raw)
-
-q_values <- seq(0, 1, by = 0.01)
-#plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
-
-# Plot with glm(Y~X+A-1)
-data_LN_quant_glm_raw <- sim_data_LN_quant_glm_raw$sim_data
-
-q_len <- length(q_values)
-
-quantile_array <- matrix(nrow = nsim, ncol = q_len)
-
-for (i in 1:nsim) {
-  for (q in 1:q_len) {
-    quant <- q_values[q]
-    
-    quantile_array[i, q] <- 
-      as.numeric(quantile(data_LN_quant_glm_raw[[i]][[2]][, 2], quant))
-    
-  }
-}
-glm_quantile_vector_raw <- apply(quantile_array, 2, mean)
-
-plot_quant(data_LN_quant_raw, q_values, xi_big = 10000, glm_quantile_vector_raw)
-
 
 
 # Storage ------------------

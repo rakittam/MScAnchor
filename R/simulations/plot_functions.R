@@ -278,8 +278,8 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
   # ggsave(filename = "ex4sim1_b.pdf", plot = gg2, height = 4, width = 6)
   # 
 
-  
-# 
+
+
 #   # Example 2 Plots for LaTeX
 #   ggsave(filename = "sim1.pdf", plot = gg1, height = 4, width = 6)
 # 
@@ -308,12 +308,15 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
 # 
 #       #mean_data_glare$mean_b[mean_data_glare$xi == 0]
 #     ) +
-#     annotate("text", label="b = 0.4", colour = 1, x = 30, y = 8.5)
-# 
+#     #annotate("text", label="b = 0.4", colour = 1, x = 30, y = 8.5)+
+#     annotate(geom = 'text', x = 30, y = 8.5,
+#              label = "atop(b == 0.4,hat(b)[xi == 10000] %~~% 0.445)",
+#              parse = TRUE)
+# gg3
 #   # Plots for LaTeX
 #   ggsave(filename = "ex2sim1.pdf", plot = gg3, height = 4, width = 6)
 # 
-#   
+
   
   # # Example 3
   # gg4 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
@@ -341,10 +344,47 @@ plot_fivi_X <- function(sim_data, xi_big = 10000) {
   # 
   #     #mean_data_glare$mean_b[mean_data_glare$xi == 0]
   #   ) +
-  #   annotate("text", label="b = 0.4", colour = 1, x = 30, y = 1.975)
+  #   # annotate("text", label="b = 0.4", colour = 1, x = 30, y = 1.975)
+  #   annotate(geom = 'text', x = 30, y = 1.9, 
+  #            label = "atop(b == 0.4,hat(b)[xi == 10000] %~~% 0.464)", 
+  #            parse = TRUE)
   # 
   # # Plots for LaTeX
   # ggsave(filename = "ex3sim1.pdf", plot = gg4, height = 4, width = 6)
+  
+  # # Example 4
+  # gg4 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
+  # 
+  #   geom_line() +
+  #   geom_hline(yintercept = mean_data_big$mean_logLike_pert, linetype = "dashed") +
+  #   geom_vline(xintercept = 0, linetype = "dashed") +
+  # 
+  #   ylab("0.9-quantile of -logLik") +
+  # 
+  #   scale_x_continuous(
+  # 
+  #     # Features of the first axis
+  #     name = expression(xi),
+  #     # limits = c(-0.142,-0.020),
+  #     # breaks = c(-0.14 ,-0.111, -0.083, -0.054 ,-0.025),
+  # 
+  #     # Add a second axis and specify its features
+  #     sec.axis = sec_axis(trans= ~.,
+  #                         name= expression(hat(b)),
+  #                         breaks=c(0, 10, 20, 30, 40, 50),
+  #                         labels= round(
+  #                           mean_data_glare$mean_b[mean_data_glare$xi %in% c(0, 10, 20, 30, 40, 50)], digits = 3)
+  #     )
+  # 
+  #     #mean_data_glare$mean_b[mean_data_glare$xi == 0]
+  #   ) +
+  #   # annotate("text", label="b = 0.4", colour = 1, x = 30, y = 5)
+  #   annotate(geom = 'text', x = 30, y = 5,
+  #            label = "atop(b == 0.4,hat(b)[xi == 10000] %~~% 0.195)",
+  #            parse = TRUE)
+  # 
+  # # Plots for LaTeX
+  # ggsave(filename = "ex4sim1.pdf", plot = gg4, height = 4, width = 6)
 
 #   # Example 5
 #   gg5 <- ggplot(gg_data, aes(y = mean_logLike_pert, x = xi)) +
@@ -499,7 +539,7 @@ plot_fixi <- function(sim_data) {
                    gg3, gg4,
                    gg5, gg6,
                    labels = c("A", "B", "C","D", "E", "F"),
-                   ncol = 2, nrow = 3, common.legend = TRUE, legend="right",
+                   ncol = 2, nrow = 3, common.legend = TRUE, legend="top",
                    font.label = list(face = "plain"))
   
   ggsave(filename = "ex2sim2.pdf", plot = arr, height = 7.5, width = 5)
