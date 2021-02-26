@@ -1,8 +1,24 @@
 # Define, run and store simulation data sets
 #
-# Date: 19.01.21     Author: Maic Rakitta
+# Date: 26.02.21     Author: Maic Rakitta
 ###############################################################################
-
+# Description -----------------------------------------------------------------
+#
+# The file simulation_functions.R provides the simulations for each simulation
+#  example in the thesis. First load the function definitions and packages and 
+#  then head to the corresponding example of interest.
+#
+# The file plot_functions.R stores the plot functions used in this script. For
+#  visualizing results only, simply execute the plot_functions.R file and the
+#  call the corresponding plot function. If interests in specific graphics with
+#  descriptions, load the data manually in the plot function and use the commen-
+#  ted code.
+#
+# The file run_analysis.R is the main file that calls stored or loaded data and
+#  executes plot functions or makes analysis.
+#
+# -----------------------------------------------------------------------------
+### Libraries
 library(glare)
 library(simstudy)
 
@@ -236,8 +252,10 @@ onerep_rot_fivi <- function(rep, nobs = 300, data_table, data_pert_table,
   b_dev_big <- as.numeric(coef(fit_dev_big))
   b_dev_big_se <- fit_dev_big$coef_se
   
-  logLik_dev_big_pert_indiv <- logLik(fit_dev_big, newdata = dd_pert, indiv = TRUE)
-  logLik_dev_big_pert <- as.numeric(quantile(logLik_dev_big_pert_indiv, quant_value))
+  logLik_dev_big_pert_indiv <- logLik(fit_dev_big, newdata = dd_pert,
+                                      indiv = TRUE)
+  logLik_dev_big_pert <- as.numeric(quantile(logLik_dev_big_pert_indiv,
+                                             quant_value))
   
   # Fit glare for xi = 0 for pearson
   fit_pea_0 <- glare(formula = formula,
@@ -264,8 +282,10 @@ onerep_rot_fivi <- function(rep, nobs = 300, data_table, data_pert_table,
   b_pea_big <- as.numeric(coef(fit_pea_big))
   b_pea_big_se <- fit_pea_big$coef_se
   
-  logLik_pea_big_pert_indiv <- logLik(fit_pea_big, newdata = dd_pert, indiv = TRUE)
-  logLik_pea_big_pert <- as.numeric(quantile(logLik_pea_big_pert_indiv, quant_value))
+  logLik_pea_big_pert_indiv <- logLik(fit_pea_big, newdata = dd_pert,
+                                      indiv = TRUE)
+  logLik_pea_big_pert <- as.numeric(quantile(logLik_pea_big_pert_indiv,
+                                             quant_value))
   
   # Return
   data.frame(rep = rep,
@@ -509,7 +529,8 @@ onerep_fixi <- function(rep, nobs = 300, data_table, data_pert_table,
     
     data_frame <- rbind(data_frame, data_frame_temp)
     
-    indv_list[[s]] <- list(logLik_pert_indiv, devres, peares, xi_values, v = v_values[s])
+    indv_list[[s]] <- list(logLik_pert_indiv, devres, peares,
+                           xi_values, v = v_values[s])
   }
   
   list(data = data_frame,
@@ -721,7 +742,8 @@ simulate_fivi_quant <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
     states[r, ] <- .Random.seed
     sim_data[[r]] <- 
       onerep_fivi_quant(rep = r,
-                        data_table = data_table, data_pert_table = data_pert_table, 
+                        data_table = data_table,
+                        data_pert_table = data_pert_table, 
                         formula = formula, A_formula = A_formula,
                         xi_values = xi_values, xi_big = xi_big,
                         family = family, type = type)
@@ -931,7 +953,8 @@ simulate_fivi_quant_glm <- function(nsim, nobs = 300, xi_values, xi_big = 10000,
     states[r, ] <- .Random.seed
     sim_data[[r]] <- 
       onerep_fivi_quant_glm(rep = r,
-                            data_table = data_table, data_pert_table = data_pert_table, 
+                            data_table = data_table,
+                            data_pert_table = data_pert_table, 
                             formula = formula, A_formula = A_formula,
                             xi_values = xi_values, xi_big = xi_big,
                             family = family, type = type)
@@ -1020,7 +1043,8 @@ temp_data <- sim_data_rot$sim_data
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(temp_data, file = paste(paste(path_name, Sys.Date(), sep = ""), "/temp_data_yhat_diff.Rdata", sep =""))
+# save(temp_data, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                              "/temp_data_yhat_diff.Rdata", sep =""))
 
 xi_vec <- c(xi_values, xi_big)
 max_y_diff <- matrix(nrow = length(xi_vec))
@@ -1039,7 +1063,8 @@ plot(b_vec, max_y_diff)
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_rot, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_rot, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                 "/sim1.Rdata", sep =""))
 
 # sim2: Rothenhaeusler with fixed v ---
 
@@ -1055,14 +1080,16 @@ sim_data_rot_X_fivi <- simulate_rot_fivi(nsim = nsim, nobs = 1000,
                                          xi_values = xi_values, xi_big = xi_big,
                                          data_table = data_table,
                                          data_pert_table = data_pert_table, 
-                                         formula = formula, A_formula = A_formula,
+                                         formula = formula,
+                                         A_formula = A_formula,
                                          family = family,
                                          quant_value = 0.9) 
 
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_rot_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
+# save(sim_data_rot_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""),
+                                       # "/sim2.Rdata", sep =""))
 
 # sim3: Rothenhaeusler with fixed xi ---
 
@@ -1086,7 +1113,8 @@ sim_data_rot_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex1/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_rot_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
+# save(sim_data_rot_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                        "/sim3.Rdata", sep =""))
 
 # ex2: Poisson IV Example -----------------------------------------------------
 
@@ -1108,7 +1136,8 @@ def_poi_X_pert <- defData(def_poi_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "X", dist = "normal", 
                           formula = "2 * H + v", variance = 0.25)
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link = "log",
+def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson",
+                          link = "log",
                           formula = "0.4 * X + 1 * H", variance = 1)
 
 # Parameters of linear predictor
@@ -1155,7 +1184,8 @@ sim_data_poi_X_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
 # # Save data
 # path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_poi_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_poi_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                        "/sim1.Rdata", sep =""))
 
 # sim2: Poisson IV for fixed xi ---
 
@@ -1179,7 +1209,8 @@ sim_data_poi_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
 # # Save data
 # path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_poi_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
+# save(sim_data_poi_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                        "/sim2.Rdata", sep =""))
 
 # sim3: IV investigation for poisson ---
 
@@ -1205,7 +1236,8 @@ IV_b_poi <- simulate_IV(nsim = nsim, nobs_values = nobs_values,
 # # Save data
 # path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(IV_b_poi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
+# save(IV_b_poi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                             "/sim3.Rdata", sep =""))
 
 # sim4: Poisson IV several quantiles ---
 
@@ -1219,17 +1251,19 @@ xi_big <- 10000
 
 # Simulate
 sim_data_poi_X_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                            xi_values = xi_values, xi_big = xi_big,
+                                            xi_values = xi_values,
+                                            xi_big = xi_big,
                                             data_table = data_table,
                                             data_pert_table = data_pert_table, 
-                                            formula = formula, A_formula = A_formula,
+                                            formula = formula,
+                                            A_formula = A_formula,
                                             family = family, type = type) 
 
 # # Save data
 # path_name <- "./data sets/simulation_study/ex2/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_poi_X_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
-# 
+# save(sim_data_poi_X_quant, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                         "/sim4.Rdata", sep =""))
 
 
 
@@ -1254,7 +1288,8 @@ def_bin_X_pert <- defData(def_bin_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_bin_X_pert <- defData(def_bin_X_pert, varname = "X", dist = "normal", 
                           formula = "2 * H + v", variance = 0.25)
-def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial", link = "logit",
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial",
+                          link = "logit",
                           formula = "0.4 * X + 1 * H", variance = 1)
 
 # Parameters of linear predictor
@@ -1325,7 +1360,8 @@ sim_data_bin_X_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_bin_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_bin_X_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                        "/sim1.Rdata", sep =""))
 
 # sim2: Binomial IV for fixed xi ---
 
@@ -1349,8 +1385,8 @@ sim_data_bin_X_fixi <- simulate_fixi(nsim = nsim, nobs = 1000,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_bin_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
-# 
+# save(sim_data_bin_X_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                        "/sim2.Rdata", sep =""))
 
 # sim3: IV investigation for binomial ---
 
@@ -1379,7 +1415,8 @@ plot_IV(IV_b_data, causal_parameter = b)
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(IV_b_bin, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim3.Rdata", sep =""))
+# save(IV_b_bin, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                             "/sim3.Rdata", sep =""))
 # 
 
 
@@ -1407,16 +1444,19 @@ xi_big <- 10000
 
 # Simulate
 sim_data_bin_X_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                            xi_values = xi_values, xi_big = xi_big,
+                                            xi_values = xi_values,
+                                            xi_big = xi_big,
                                             data_table = data_table,
                                             data_pert_table = data_pert_table, 
-                                            formula = formula, A_formula = A_formula,
+                                            formula = formula,
+                                            A_formula = A_formula,
                                             family = family, type = type) 
 
 # # Save data
 # path_name <- "./data sets/simulation_study/ex3/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_bin_X_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
+# save(sim_data_bin_X_quant, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                         "/sim4.Rdata", sep =""))
 # 
 # 
 
@@ -1430,7 +1470,8 @@ def_poi_XHY <- defData(def_poi_XHY, varname = "H", dist = "normal",
                      formula = "0.5 * A", variance = 0.25)
 def_poi_XHY <- defData(def_poi_XHY, varname = "X", dist = "normal", 
                      formula = "2 * H + A", variance = 0.25)
-def_poi_XHY <- defData(def_poi_XHY, varname = "Y", dist = "poisson", link = "log", 
+def_poi_XHY <- defData(def_poi_XHY, varname = "Y", dist = "poisson",
+                       link = "log", 
                      formula = "0.4 * X + 1 * H - A", variance = 1)
 
 def_poi_XHY_pert <- defData(varname = "A", dist = "normal", 
@@ -1441,7 +1482,8 @@ def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "H", dist = "normal",
                           formula = "0.5", variance = 0.25)
 def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "X", dist = "normal", 
                           formula = "2 * H + v", variance = 0.25)
-def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y", dist = "poisson", link = "log",
+def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y", dist = "poisson",
+                            link = "log",
                           formula = "0.4 * X + 1 * H - 1.5", variance = 1)
 
 # Parameters of linear predictor
@@ -1494,7 +1536,8 @@ sim_data_poi_XHY_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex4/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_poi_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_poi_XHY_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                          "/sim1.Rdata", sep =""))
 
 # sim4: Poisson IV several quantiles ---
 
@@ -1508,60 +1551,22 @@ xi_big <- 10000
 
 # Simulate
 sim_data_poi_XHY_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                              xi_values = xi_values, xi_big = xi_big,
+                                              xi_values = xi_values,
+                                              xi_big = xi_big,
                                               data_table = data_table,
                                               data_pert_table = data_pert_table, 
-                                              formula = formula, A_formula = A_formula,
+                                              formula = formula,
+                                              A_formula = A_formula,
                                               family = family, type = type) 
 
 # # Save data
 # path_name <- "./data sets/simulation_study/ex4/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_poi_XHY_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
+# save(sim_data_poi_XHY_quant, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                           "/sim4.Rdata", sep =""))
 
 
 # ex5: Label Noise Example ----------------------------------------------------
-
-# # Define variables for unperturbed and perturbed data set
-# def_LN <- defData(varname = "randA", dist = "binary",
-#                   formula = 0.5)
-# def_LN <- defData(def_LN, varname = "A", 
-#                   formula = "2 * randA - 1")
-# def_LN <- defData(def_LN, varname = "B", dist = "binomial", link = "logit",
-#                   formula = "0.6 + A", variance = 1)
-# def_LN <- defData(def_LN, varname = "H", dist = "normal",
-#                   formula = 0, variance = 0.01)
-# def_LN <- defData(def_LN, varname = "X", dist = "normal", 
-#                   formula = "2 * H", variance = 0.01)
-# def_LN <- defData(def_LN, varname = "Yorg", dist = "binomial", link = "logit", 
-#                   formula = "1 + 0.4 * X + 1 * H", variance = 1)
-# def_LN <- defData(def_LN, varname = "Y", dist = "binary", 
-#                   formula = "abs(Yorg - B)")
-# 
-# def_LN_pert <- defData(varname = "randA", dist = "binary",
-#                        formula = 0.5)
-# def_LN_pert <- defData(def_LN_pert, varname = "A", 
-#                        formula = "2 * randA - 1")
-# def_LN_pert <- defData(def_LN_pert, varname = "v", 
-#                        formula = 0.25) # set perturbation strength
-# def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
-#                        formula = "0.6 + v", variance = 1)
-# def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
-#                        formula = 0, variance = 0.01)
-# def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
-#                        formula = "2 * H", variance = 0.01)
-# def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
-#                        formula = "1 + 0.4 * X + 1 * H", variance = 1)
-# def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
-#                        formula = "abs(Yorg - B)")
-# 
-# # Parameters of linear predictor
-# b <- 0.4
-# h <- 1
-# c <- 1
-# 
-# t <- 0.6
-# v_pert <- 0.25
 
 # Define variables for unperturbed and perturbed data set
 def_LN <- defData(varname = "A", dist = "normal", 
@@ -1581,13 +1586,15 @@ def_LN_pert <- defData(varname = "A", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
                        formula = 0.8) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
+def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial",
+                       link = "logit",
                        formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
                        formula = "2 * H", variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", 
+                       link = "logit", 
                        formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - B)")
@@ -1659,7 +1666,8 @@ sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 100,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                     "/sim1.Rdata", sep =""))
 
 # sim2: Label Noise for fixed xi ---
 
@@ -1683,7 +1691,8 @@ sim_data_LN_fixi <- simulate_fixi(nsim = nsim, nobs = 100,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2.Rdata", sep =""))
+# save(sim_data_LN_fixi, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                     "/sim2.Rdata", sep =""))
 
 sim_data_LN_fixi_glm <- simulate_fixi(nsim = nsim, nobs = 1000,
                                       xi_values = 0,
@@ -1698,214 +1707,192 @@ sim_data_LN_fixi_glm <- simulate_fixi(nsim = nsim, nobs = 1000,
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex5/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_fixi_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim2_glm.Rdata", sep =""))
+# save(sim_data_LN_fixi_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                         "/sim2_glm.Rdata", sep =""))
 
 
 
-# sim4: Label Noise several quantiles ---
-
-set.seed(16541)
-
-nsim <- 100
-
-# xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
-
-xi_values <- seq(0, 10, by = 0.1)
-
-xi_big <- 10000
-
-# Simulate
-sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                         xi_values = xi_values, xi_big = xi_big,
-                                         data_table = data_table,
-                                         data_pert_table = data_pert_table, 
-                                         formula = formula, A_formula = A_formula,
-                                         family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
-
-data_LN_quant <- sim_data_LN_quant$sim_data
-
+# The following is code for tryout settings for LN with anchor only on tau
+# # sim4: Label Noise several quantiles ---
+# 
+# set.seed(16541)
+# 
+# nsim <- 100
+# 
+# # xi_values <- c(0, 0.3, 0.5, 0.8, seq(1, 100, by = 5))
+# 
+# xi_values <- seq(0, 10, by = 0.1)
+# 
+# xi_big <- 10000
+# 
+# # Simulate for evaluation Y with noise
+# sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
+#                                          xi_values = xi_values, xi_big = xi_big,
+#                                          data_table = data_table,
+#                                          data_pert_table = data_pert_table, 
+#                                          formula = formula,
+#                                          A_formula = A_formula,
+#                                          family = family, type = type) 
+# 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""),
+# #                                      "/sim4.Rdata", sep =""))
+# 
+# data_LN_quant <- sim_data_LN_quant$sim_data
+# q_values <- seq(0, 1, by = 0.01)
+# plot_quant(data_LN_quant, q_values, xi_big = 10000)
+# 
+# # Prediction on Y_org
+# data_pert_table_raw <- updateDef(data_pert_table,
+#                                  changevar = "Y",
+#                                  newformula = "Yorg")
+# set.seed(44652)
+# # Simulate
+# sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
+#                                              xi_values = xi_values,
+#                                              xi_big = xi_big,
+#                                              data_table = data_table,
+#                                              data_pert_table = data_pert_table_raw, 
+#                                              formula = formula,
+#                                              A_formula = A_formula,
+#                                              family = family, type = type) 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+# #                                          "/sim4_raw.Rdata", sep =""))
+# 
+# data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
+# 
+# # head(data_LN_quant_raw)
+# # str(data_LN_quant_raw)
+# 
+# q_values <- seq(0, 1, by = 0.01)
+# plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
+# 
+# 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
+# # 
+# set.seed(55612)
+# 
+# # Simulation for glm(Y ~ X + A - 1)
+# sim_data_LN_quant_glm <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
+#                                                  xi_values = 0, xi_big = xi_big,
+#                                                  data_table = data_table,
+#                                                  data_pert_table = data_pert_table, 
+#                                                  formula =  Y ~ X + A - 1,
+#                                                  A_formula = A_formula,
+#                                                  family = family, type = type) 
+# 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm.Rdata", sep =""))
+# 
+# data_LN_quant <- sim_data_LN_quant$sim_data
+# 
 # head(data_LN_quant)
 # str(data_LN_quant)
-
-q_values <- seq(0, 1, by = 0.01)
-plot_quant(data_LN_quant, q_values, xi_big = 10000)
-
-
-
-
-# Prediction on Y_org
-data_pert_table_raw <- updateDef(data_pert_table,
-                                 changevar = "Y",
-                                 newformula = "Yorg")
-set.seed(44652)
-
-# Simulate
-sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                             xi_values = xi_values, xi_big = xi_big,
-                                             data_table = data_table,
-                                             data_pert_table = data_pert_table_raw, 
-                                             formula = formula, A_formula = A_formula,
-                                             family = family, type = type) 
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
-
-data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
-
+# 
+# q_values <- seq(0, 1, by = 0.01)
+# #plot_quant(data_LN_quant, q_values, xi_big = 10000)
+# 
+# # Plot with glm(Y~X+A-1)
+# data_LN_quant_glm <- sim_data_LN_quant_glm$sim_data
+# 
+# q_len <- length(q_values)
+# 
+# quantile_array <- matrix(nrow = nsim, ncol = q_len)
+# 
+# for (i in 1:nsim) {
+#   for (q in 1:q_len) {
+#     quant <- q_values[q]
+#     
+#     quantile_array[i, q] <- 
+#       as.numeric(quantile(data_LN_quant_glm[[i]][[2]][, 2], quant))
+#     
+#   }
+# }
+# glm_quantile_vector <- apply(quantile_array, 2, mean)
+# 
+# plot_quant(data_LN_quant, q_values, xi_big = 10000, glm_quantile_vector)
+# 
+# 
+# # Prediction on Y without noise
+# data_pert_table_raw <- updateDef(data_pert_table,
+#                                  changevar = "Y",
+#                                  newformula = "Yorg")
+# 
+# set.seed(44652)
+# 
+# nsim <- 100
+# 
+# xi_values <- seq(0, 10, by = 0.1)
+# xi_values <- xi_values[-1]
+# xi_big <- 10000
+# 
+# 
+# # Simulate
+# sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
+#                                              xi_values = xi_values, xi_big = xi_big,
+#                                              data_table = data_table,
+#                                              data_pert_table = data_pert_table_raw, 
+#                                              formula = formula, A_formula = A_formula,
+#                                              family = family, type = type) 
+# 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
+# 
+# set.seed(55612)
+# 
+# # Simulate for glm predict on Y without noise
+# sim_data_LN_quant_glm_raw <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
+#                                                      xi_values = 0, xi_big = xi_big,
+#                                                      data_table = data_table,
+#                                                      data_pert_table = data_pert_table_raw, 
+#                                                      formula =  Y ~ X + A - 1,
+#                                                      A_formula = A_formula,
+#                                                      family = family, type = type) 
+# 
+# # # Save data
+# # path_name <- "./data sets/simulation_study/ex5/"
+# # dir.create(paste(path_name, Sys.Date(), sep = ""))
+# # save(sim_data_LN_quant_glm_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm_raw.Rdata", sep =""))
+# 
+# data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
+# 
 # head(data_LN_quant_raw)
 # str(data_LN_quant_raw)
-
-q_values <- seq(0, 1, by = 0.01)
-plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
 # 
-set.seed(55612)
-
-# Simulate
-sim_data_LN_quant_glm <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
-                                                 xi_values = 0, xi_big = xi_big,
-                                                 data_table = data_table,
-                                                 data_pert_table = data_pert_table, 
-                                                 formula =  Y ~ X + A - 1,
-                                                 A_formula = A_formula,
-                                                 family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_glm, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm.Rdata", sep =""))
-
-data_LN_quant <- sim_data_LN_quant$sim_data
-
-head(data_LN_quant)
-str(data_LN_quant)
-
-q_values <- seq(0, 1, by = 0.01)
-#plot_quant(data_LN_quant, q_values, xi_big = 10000)
-
-# Plot with glm(Y~X+A-1)
-data_LN_quant_glm <- sim_data_LN_quant_glm$sim_data
-
-q_len <- length(q_values)
-
-quantile_array <- matrix(nrow = nsim, ncol = q_len)
-
-for (i in 1:nsim) {
-  for (q in 1:q_len) {
-    quant <- q_values[q]
-    
-    quantile_array[i, q] <- 
-      as.numeric(quantile(data_LN_quant_glm[[i]][[2]][, 2], quant))
-    
-  }
-}
-glm_quantile_vector <- apply(quantile_array, 2, mean)
-
-plot_quant(data_LN_quant, q_values, xi_big = 10000, glm_quantile_vector)
-
-
-# Prediction on Y_org
-data_pert_table_raw <- updateDef(data_pert_table,
-                                 changevar = "Y",
-                                 newformula = "Yorg")
-
-set.seed(44652)
-
-nsim <- 100
-
-xi_values <- seq(0, 10, by = 0.1)
-xi_values <- xi_values[-1]
-xi_big <- 10000
-
-
-# Simulate
-sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                             xi_values = xi_values, xi_big = xi_big,
-                                             data_table = data_table,
-                                             data_pert_table = data_pert_table_raw, 
-                                             formula = formula, A_formula = A_formula,
-                                             family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
-
-set.seed(55612)
-
-# Simulate
-sim_data_LN_quant_glm_raw <- simulate_fivi_quant_glm(nsim = nsim, nobs = 1000,
-                                                     xi_values = 0, xi_big = xi_big,
-                                                     data_table = data_table,
-                                                     data_pert_table = data_pert_table_raw, 
-                                                     formula =  Y ~ X + A - 1,
-                                                     A_formula = A_formula,
-                                                     family = family, type = type) 
-
-# # Save data
-# path_name <- "./data sets/simulation_study/ex5/"
-# dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_glm_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_glm_raw.Rdata", sep =""))
-
-data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
-
-head(data_LN_quant_raw)
-str(data_LN_quant_raw)
-
-q_values <- seq(0, 1, by = 0.01)
-#plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
-
-# Plot with glm(Y~X+A-1)
-data_LN_quant_glm_raw <- sim_data_LN_quant_glm_raw$sim_data
-
-q_len <- length(q_values)
-
-quantile_array <- matrix(nrow = nsim, ncol = q_len)
-
-for (i in 1:nsim) {
-  for (q in 1:q_len) {
-    quant <- q_values[q]
-    
-    quantile_array[i, q] <- 
-      as.numeric(quantile(data_LN_quant_glm_raw[[i]][[2]][, 2], quant))
-    
-  }
-}
-glm_quantile_vector_raw <- apply(quantile_array, 2, mean)
-
-plot_quant(data_LN_quant_raw, q_values, xi_big = 10000, glm_quantile_vector_raw)
-
-
+# q_values <- seq(0, 1, by = 0.01)
+# #plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
+# 
+# # Plot with glm(Y~X+A-1)
+# data_LN_quant_glm_raw <- sim_data_LN_quant_glm_raw$sim_data
+# 
+# q_len <- length(q_values)
+# 
+# quantile_array <- matrix(nrow = nsim, ncol = q_len)
+# 
+# for (i in 1:nsim) {
+#   for (q in 1:q_len) {
+#     quant <- q_values[q]
+#     
+#     quantile_array[i, q] <- 
+#       as.numeric(quantile(data_LN_quant_glm_raw[[i]][[2]][, 2], quant))
+#     
+#   }
+# }
+# glm_quantile_vector_raw <- apply(quantile_array, 2, mean)
+# 
+# plot_quant(data_LN_quant_raw, q_values, xi_big = 10000, glm_quantile_vector_raw)
 
 # ex6: Label Noise Example Involved -------------------------------------------
 
@@ -1927,7 +1914,8 @@ def_LN_pert <- defData(varname = "A", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
                        formula = 0.6) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
+def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial",
+                       link = "logit",
                        formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "vH", 
                        formula = 0.4) # set perturbation strength
@@ -1937,7 +1925,8 @@ def_LN_pert <- defData(def_LN_pert, varname = "vX",
                        formula = -0.5) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
                        formula = "2 * H + vX", variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial",
+                       link = "logit", 
                        formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - B)")
@@ -2006,18 +1995,11 @@ sim_data_LN_fivi <- simulate_fivi(nsim = nsim, nobs = 1000,
                                   family = family, type = type,
                                   quant_value = 0.9) 
 
-data_LN_states_fivi <- sim_data_LN_fivi$states
-data_LN_fivi <- sim_data_LN_fivi$sim_data
-
-head(data_LN_fivi)
-summary(data_LN_fivi)
-
-plot_fivi_X(data_LN_fivi)
-
 # # Save simulated data list
 # path_name <- "./data sets/simulation_study/ex6/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim1.Rdata", sep =""))
+# save(sim_data_LN_fivi, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                     "/sim1.Rdata", sep =""))
 
 # sim4: Label Noise several quantiles ---
 
@@ -2033,27 +2015,19 @@ xi_big <- 10000
 
 # Simulate
 sim_data_LN_quant <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                         xi_values = xi_values, xi_big = xi_big,
+                                         xi_values = xi_values,
+                                         xi_big = xi_big,
                                          data_table = data_table,
                                          data_pert_table = data_pert_table, 
-                                         formula = formula, A_formula = A_formula,
+                                         formula = formula,
+                                         A_formula = A_formula,
                                          family = family, type = type) 
 
 # # Save data
 # path_name <- "./data sets/simulation_study/ex6/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4.Rdata", sep =""))
-
-data_LN_quant <- sim_data_LN_quant$sim_data
-
-# head(data_LN_quant)
-# str(data_LN_quant)
-
-q_values <- seq(0, 1, by = 0.01)
-plot_quant(data_LN_quant, q_values, xi_big = 10000)
-
-
-
+# save(sim_data_LN_quant, file = paste(paste(path_name, Sys.Date(), sep = ""),
+#                                      "/sim4.Rdata", sep =""))
 
 # Prediction on Y_org
 data_pert_table_raw <- updateDef(data_pert_table,
@@ -2063,247 +2037,17 @@ set.seed(120938)
 
 # Simulate
 sim_data_LN_quant_raw <- simulate_fivi_quant(nsim = nsim, nobs = 1000,
-                                             xi_values = xi_values, xi_big = xi_big,
+                                             xi_values = xi_values,
+                                             xi_big = xi_big,
                                              data_table = data_table,
                                              data_pert_table = data_pert_table_raw, 
-                                             formula = formula, A_formula = A_formula,
+                                             formula = formula,
+                                             A_formula = A_formula,
                                              family = family, type = type) 
 # # Save data
 # path_name <- "./data sets/simulation_study/ex6/"
 # dir.create(paste(path_name, Sys.Date(), sep = ""))
-# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), "/sim4_raw.Rdata", sep =""))
+# save(sim_data_LN_quant_raw, file = paste(paste(path_name, Sys.Date(), sep = ""), 
+#                                          "/sim4_raw.Rdata", sep =""))
 
 data_LN_quant_raw <- sim_data_LN_quant_raw$sim_data
-
-# head(data_LN_quant_raw)
-# str(data_LN_quant_raw)
-
-q_values <- seq(0, 1, by = 0.01)
-plot_quant(data_LN_quant_raw, q_values, xi_big = 10000)
-
-
-# Storage ------------------
-# Function definition for fixed xi for LN -------------------------------------
-
-# for LN involved would have to change v iteration for fixi function:
-
-onerep_fixi_LN <- function(rep, nobs = 300, data_table, data_pert_table, 
-                           formula, A_formula, xi_values, v_values,
-                           family, type, quant_value = 0.9, rep_seed) {
-  
-  v_len <- length(v_values)
-  
-  data_frame <- data.frame()
-  indv_list <- list()
-  
-  for (s in 1:v_len) {
-    data_pert_table_temp <- updateDef(data_pert_table,
-                                      changevar = "v",
-                                      newformula = v_values[s])
-    
-    # Generate data with nobs observations
-    set.seed(rep_seed) # use the same seeds for each v to use same errors
-    dd <- genData(nobs, data_table)
-    set.seed(rep_seed + 200)
-    dd_pert <- genData(nobs, data_pert_table_temp)
-    
-    # Fit glares
-    xi_len <- length(xi_values)
-    b <- matrix(nrow = xi_len, ncol = 1)
-    b_se <- matrix(nrow = xi_len, ncol = 1)
-    logLik_pert_indiv <- matrix(nrow = xi_len, ncol = nobs)
-    logLik_pert <- matrix(nrow = xi_len, ncol = 1)
-    
-    devres <- matrix(nrow = xi_len, ncol = nobs)
-    deviance <- matrix(nrow = xi_len, ncol = 1)
-    
-    peares <- matrix(nrow = xi_len, ncol = nobs)
-    pearson <- matrix(nrow = xi_len, ncol = 1)
-    
-    for (j in 1:xi_len) {
-      xi <- xi_values[j]
-      
-      fit <- glare(formula = formula,
-                   A_formula = A_formula,
-                   data = dd,
-                   xi = xi,
-                   family = family,
-                   type = type)
-      
-      b[j] <- as.numeric(coef(fit))
-      b_se[j] <- fit$coef_se
-      
-      logLik_pert_indiv[j, ] <- logLik(fit, newdata = dd_pert, indiv = TRUE)
-      logLik_pert[j] <- as.numeric(quantile(logLik_pert_indiv[j, ], quant_value))
-      
-      if(family == "poisson") {
-        
-        link_inv <- poisson()$linkinv
-        vari <- poisson()$variance
-        mu <- link_inv(dd_pert$X * b[j])
-        
-        r <- mu
-        p <- which(dd_pert$Y > 0)
-        r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
-        
-        devres[j, ] <- sign(dd_pert$Y - mu) * sqrt(2 * r)
-        
-      } else if(family == "binomial") {
-        
-        link_inv <- binomial()$linkinv
-        vari <- binomial()$variance
-        mu <- link_inv(dd_pert$X * b[j])
-        
-        r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
-          log((1 - dd_pert$Y) / (1 - mu))
-        p <- which(dd_pert$Y == 0)
-        r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
-        q <- which(dd_pert$Y == 1)
-        r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
-        
-        devres[j, ] <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
-        
-      } else if(family == "gaussian"){
-        
-        link_inv <- gaussian()$linkinv
-        vari <- gaussian()$variance
-        mu <- link_inv(dd_pert$X * b[j])
-        
-        n <- length(dd_pert$Y)
-        s_hat <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
-        
-        devres[j, ] <- 1 / s_hat * (dd_pert$Y - mu)
-        
-      } else {
-        stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
-      }
-      
-      # Deviance
-      deviance[j] <- sqrt(mean(devres[j, ]^2))
-      
-      # Pearson
-      V <- vari(mu)
-      peares[j, ] <- (dd_pert$Y - mu)/sqrt(V)
-      pearson[j] <-  sqrt(mean(peares[j, ]^2))
-    }
-    
-    
-    
-    ###
-    fit <- glare(formula = Y ~ X + A - 1,
-                 A_formula = A_formula,
-                 data = dd,
-                 xi = 0,
-                 family = family,
-                 type = type)
-    
-    b_glm <- as.numeric(coef(fit))
-    b_se_glm <- fit$coef_se
-    
-    logLik_pert_indiv_glm <- logLik(fit, newdata = dd_pert, indiv = TRUE)
-    logLik_pert_glm <- as.numeric(quantile(logLik_pert_indiv_glm, quant_value))
-    
-    if(family == "poisson") {
-      
-      link_inv <- poisson()$linkinv
-      vari <- poisson()$variance
-      mu <- link_inv(dd_pert$X * b_glm)
-      
-      r <- mu
-      p <- which(dd_pert$Y > 0)
-      r[p] <- (dd_pert$Y * log(dd_pert$Y / mu) - (dd_pert$Y - mu))[p]
-      
-      devres_glm <- sign(dd_pert$Y - mu) * sqrt(2 * r)
-      
-    } else if(family == "binomial") {
-      
-      link_inv <- binomial()$linkinv
-      vari <- binomial()$variance
-      mu <- link_inv(dd_pert$X * b_glm)
-      
-      r <- dd_pert$Y * log(dd_pert$Y / (mu)) + (1 - dd_pert$Y) *
-        log((1 - dd_pert$Y) / (1 - mu))
-      p <- which(dd_pert$Y == 0)
-      r[p] <- ((1 - dd_pert$Y) * log((1 - dd_pert$Y) / (1 - mu)))[p]
-      q <- which(dd_pert$Y == 1)
-      r[q] <- (dd_pert$Y * log(dd_pert$Y / (mu)))[q]
-      
-      devres_glm <- sign(dd_pert$Y / 1 - mu) * sqrt(2 * r)
-      
-    } else if(family == "gaussian"){
-      
-      link_inv <- gaussian()$linkinv
-      vari <- gaussian()$variance
-      mu <- link_inv(dd_pert$X * b_glm)
-      
-      n <- length(dd_pert$Y)
-      s_hat <- sqrt(1/n * sum((dd_pert$Y-mu)^2))
-      
-      devres_glm <- 1 / s_hat * (dd_pert$Y - mu)
-      
-    } else {
-      stop("No valid family! Use either 'poisson', 'binomial' or 'gaussian'.")
-    }
-    
-    # Deviance
-    deviance_glm <- sqrt(mean(devres_glm^2))
-    
-    # Pearson
-    V <- vari(mu)
-    peares_glm <- (dd_pert$Y - mu)/sqrt(V)
-    pearson_glm <-  sqrt(mean(peares_glm^2))
-    ###
-    
-    
-    # Return
-    data_frame_temp <- data.frame(rep = rep, v = v_values[s],
-                                  xi = c(-1, xi_values),
-                                  logLik_pert = c(logLik_pert_glm, logLik_pert),
-                                  deviance = c(deviance_glm, deviance),
-                                  pearson = c(pearson_glm, pearson))
-    
-    data_frame <- rbind(data_frame, data_frame_temp)
-    
-    indv_list[[s]] <- list(logLik_pert_indiv=c(logLik_pert_indiv_glm, logLik_pert_indiv),
-                           devres=c(devres_glm,devres), peares=c(peares_glm, peares),
-                           xi_values=c(-1, xi_values), v = v_values[s],
-                           b= b, b_se= b_se, b_glm=b_glm,b_se_glm=b_se_glm)
-  }
-  
-  list(data = data_frame,
-       indv = indv_list)
-}
-
-
-# Define simulation function
-simulate_fixi_LN <- function(nsim = 100, nobs = 300, xi_values, v_values, 
-                             data_table, data_pert_table, 
-                             formula, A_formula, family, type,
-                             quant_value = 0.9, start_seed) {
-  
-  data_list <- list()
-  
-  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
-  for (r in 1:nsim) {
-    
-    data_temp <-
-      onerep_fixi_LN(rep = r, nobs = nobs,
-                     data_table = data_table,
-                     data_pert_table = data_pert_table, 
-                     formula = formula, A_formula = A_formula,
-                     xi_values = xi_values, v_values = v_values,
-                     family = family, type = type,
-                     quant_value = quant_value, rep_seed = r + start_seed)
-    
-    data_list[[r]] <- list(rep = r,
-                           data = data_temp)
-    
-    Sys.sleep(0.1)
-    setTxtProgressBar(pb, r)
-  }
-  close(pb)
-  
-  data_list
-}
-
-

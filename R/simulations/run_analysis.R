@@ -1,8 +1,24 @@
 # Run simulation analysis and plots
 #
-# Date: 19.01.21     Author: Maic Rakitta
+# Date: 26.02.21     Author: Maic Rakitta
 ###############################################################################
-
+# Description -----------------------------------------------------------------
+#
+# The file simulation_functions.R provides the simulations for each simulation
+#  example in the thesis. First load the function definitions and packages and 
+#  then head to the corresponding example of interest.
+#
+# The file plot_functions.R stores the plot functions used in this script. For
+#  visualizing results only, simply execute the plot_functions.R file and the
+#  call the corresponding plot function. If interests in specific graphics with
+#  descriptions, load the data manually in the plot function and use the commen-
+#  ted code.
+#
+# The file run_analysis.R is the main file that calls stored or loaded data and
+#  executes plot functions or makes analysis.
+#
+# -----------------------------------------------------------------------------
+### Libraries
 library(ggplot2)
 library(cowplot)
 library(reshape2)
@@ -80,7 +96,8 @@ def_poi_X_pert <- defData(def_poi_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_poi_X_pert <- defData(def_poi_X_pert, varname = "X", dist = "normal", 
                           formula = "2 * H + v", variance = 0.25)
-def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson", link = "log",
+def_poi_X_pert <- defData(def_poi_X_pert, varname = "Y", dist = "poisson",
+                          link = "log",
                           formula = "0.4 * X + 1 * H", variance = 1)
 
 # Parameters of linear predictor
@@ -96,8 +113,8 @@ set.seed(8151)
 dd <- genData(1000, def_poi_X)
 dd_pert <- genData(1000, def_poi_X_pert)
 
-eta <- b*dd$X + h * dd$H + a * dd$A
-eta_pert <- b*dd_pert$X + h * dd_pert$H + a_pert * dd_pert$A
+eta <- b * dd$X + h * dd$H + a * dd$A
+eta_pert <- b * dd_pert$X + h * dd_pert$H + a_pert * dd_pert$A
 
 gg_hist <- data.frame(eta = c(eta, eta_pert),
                       mu = c(exp(eta), exp(eta_pert)),
@@ -109,15 +126,14 @@ phist <- gghistogram(
   gg_hist, x = "eta", 
   add = "mean", rug = FALSE,
   fill = "data", palette = c("#FF6666", "#00AFBB"),
-  bins = 30
-) + xlab(expression(eta)) + rremove("legend")
+  bins = 30) + xlab(expression(eta)) + rremove("legend")
 
 pdensity <- ggdensity(
   gg_hist, x = "eta", 
   color= "data", palette = c("#FF6666", "#00AFBB"),
-  alpha = 0,
-) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  alpha = 0) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)),
+                     position = "right")  +
   theme_half_open(11, rel_small = 1) +
   rremove("x.axis")+
   rremove("xlab") +
@@ -157,13 +173,12 @@ plot_fivi_X(data_poi_X_fivi)
 
 load("./data sets/simulation_study/ex2/2021-02-18/sim2.Rdata")
 
+nsim <- 100
 
 # Compute data
 data_poi_X_fixi <- data.frame(matrix(nrow = 0, ncol = 8))
 colnames(data_poi_X_fixi) <- c("rep", "v", "xi",
                                "b", "se", "logLik_pert", "deviance", "pearson")
-
-nsim <- 100
 
 for (i in 1:nsim) {
   
@@ -175,18 +190,16 @@ for (i in 1:nsim) {
 head(data_poi_X_fixi)
 summary(data_poi_X_fixi)
 
-# Plot Quantile of log-likelihood and with residuals
+# Choose hyperparameter of interest
 poi_X_fixi_chosen <-
   data_poi_X_fixi[data_poi_X_fixi$xi %in% c(0, 1, 3, 5, 10000), ]
 
-#plot_fixi(poi_X_fixi_chosen)
-
-# Investigate different quantiles
-
-alpha <- 0.9
+# Investigate different quantiles for deviance and Pearson residuals
+alpha <- 0.9 # set alpha-quantile of interest for plots
 
 quantile_data <- data.frame(matrix(nrow = 0, ncol = 6))
-colnames(quantile_data) <- c("rep", "v", "xi", "logLik_pert", "deviance", "pearson")
+colnames(quantile_data) <- c("rep", "v", "xi",
+                             "logLik_pert", "deviance", "pearson")
 
 for (i in 1:nsim) {
   
@@ -197,24 +210,25 @@ for (i in 1:nsim) {
   for (s in 1:vlen) {
     
     # Log-Likelihood
-    logLik <- apply(data_temp[[s]][[1]], 1, function(x) quantile(x, probs = alpha))
+    logLik <- apply(data_temp[[s]][[1]], 1,
+                    function(x) quantile(x, probs = alpha))
     
     # Deviance Residuals
-    # deviance <- apply(data_temp[[s]][[2]], 1, function(x) quantile(x, probs = alpha))
-    deviance <- sqrt(apply(data_temp[[s]][[2]]^2, 1, function(x) quantile(x, probs = alpha)))
+    deviance <- sqrt(apply(data_temp[[s]][[2]]^2, 1,
+                           function(x) quantile(x, probs = alpha)))
     
     # Pearson Residuals
-    # pearson <- apply(data_temp[[s]][[3]], 1, function(x) quantile(x, probs = alpha))
-    pearson <- sqrt(apply(data_temp[[s]][[3]]^2, 1, function(x) quantile(x, probs = alpha)))
+    pearson <- sqrt(apply(data_temp[[s]][[3]]^2, 1,
+                          function(x) quantile(x, probs = alpha)))
     
-    temp <- data.frame(rep = i, v = data_temp[[s]][[5]], xi = data_temp[[s]][[4]],
-                       logLik_pert = logLik, deviance = deviance, pearson = pearson)
+    temp <- data.frame(rep = i, v = data_temp[[s]][[5]],
+                       xi = data_temp[[s]][[4]], logLik_pert = logLik,
+                       deviance = deviance, pearson = pearson)
     
     quantile_data <- rbind(quantile_data, temp)
   }
   
   data_temp$logLik
-  
   data_poi_X_fixi <- rbind(data_poi_X_fixi, data_temp)
 }
 
@@ -242,10 +256,7 @@ str(data_poi_X_quant)
 q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_poi_X_quant, q_values, xi_big = 10000)
 
-
-
 # ex3: Binomial with IV Example -----------------------------------------------
-
 
 # Define variables for unperturbed and perturbed data set
 def_bin_X <- defData(varname = "A", dist = "normal", 
@@ -265,25 +276,25 @@ def_bin_X_pert <- defData(def_bin_X_pert, varname = "H", dist = "normal",
                           formula = 0, variance = 0.25)
 def_bin_X_pert <- defData(def_bin_X_pert, varname = "X", dist = "normal", 
                           formula = "2 * H + v", variance = 0.25)
-def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial", link = "logit",
+def_bin_X_pert <- defData(def_bin_X_pert, varname = "Y", dist = "binomial",
+                          link = "logit",
                           formula = "0.4 * X + 1 * H", variance = 1)
 
-# Parameters of linear predictor
+# Parameters
 b <- 0.4
 h <- 1
-
 v <- 3
 
+# sim 0: Histograms and bar plots
 set.seed(96853)
-# Distribution histogram
 dd <- genData(1000, def_poi_X)
 dd_pert <- genData(1000, def_poi_X_pert)
 
-eta <- b*dd$X + h * dd$H
-eta_pert <- b*dd_pert$X + h * dd_pert$H
+eta <- b * dd$X + h * dd$H
+eta_pert <- b * dd_pert$X + h * dd_pert$H
 
-p <- exp(eta)/(1+exp(eta))
-p_pert <- exp(eta_pert)/(1+exp(eta_pert))
+p <- exp(eta) / (1 + exp(eta))
+p_pert <- exp(eta_pert) / (1 + exp(eta_pert))
 
 gg_hist <- data.frame(eta = c(eta, eta_pert),
                       p = c(p, p_pert),
@@ -295,15 +306,14 @@ phist <- gghistogram(
   gg_hist, x = "eta", 
   add = "mean", rug = FALSE,
   fill = "data", palette = c("#FF6666", "#00AFBB"),
-  bins = 30
-) + xlab(expression(eta)) + rremove("legend")
+  bins = 30) + xlab(expression(eta)) + rremove("legend")
 
 pdensity <- ggdensity(
   gg_hist, x = "eta", 
   color= "data", palette = c("#FF6666", "#00AFBB"),
-  alpha = 0,
-) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  alpha = 0) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)),
+                     position = "right")  +
   theme_half_open(11, rel_small = 1) +
   rremove("x.axis")+
   rremove("xlab") +
@@ -358,15 +368,13 @@ for (i in 1:100) {
 head(data_bin_X_fixi)
 summary(data_bin_X_fixi)
 
-# Plot Quantile of log-likelihood and with residuals
-#plot_fixi(data_bin_X_fixi)
+# Investigate different quantiles of deviance and Pearson residuals
 
-# Investigate different quantiles
-
-alpha <- 0.9
+alpha <- 0.9 # set quantile
 
 quantile_data <- data.frame(matrix(nrow = 0, ncol = 6))
-colnames(quantile_data) <- c("rep", "v", "xi", "logLik_pert", "deviance", "pearson")
+colnames(quantile_data) <- c("rep", "v", "xi",
+                             "logLik_pert", "deviance", "pearson")
 
 for (i in 1:nsim) {
   
@@ -377,24 +385,25 @@ for (i in 1:nsim) {
   for (s in 1:vlen) {
     
     # Log-Likelihood
-    logLik <- apply(data_temp[[s]][[1]], 1, function(x) quantile(x, probs = alpha))
+    logLik <- apply(data_temp[[s]][[1]], 1,
+                    function(x) quantile(x, probs = alpha))
     
     # Deviance Residuals
-    # deviance <- apply(data_temp[[s]][[2]], 1, function(x) quantile(x, probs = alpha))
-    deviance <- sqrt(apply(data_temp[[s]][[2]]^2, 1, function(x) quantile(x, probs = alpha)))
+    deviance <- sqrt(apply(data_temp[[s]][[2]]^2, 1,
+                           function(x) quantile(x, probs = alpha)))
     
     # Pearson Residuals
-    # pearson <- apply(data_temp[[s]][[3]], 1, function(x) quantile(x, probs = alpha))
-    pearson <- sqrt(apply(data_temp[[s]][[3]]^2, 1, function(x) quantile(x, probs = alpha)))
+    pearson <- sqrt(apply(data_temp[[s]][[3]]^2, 1,
+                          function(x) quantile(x, probs = alpha)))
     
-    temp <- data.frame(rep = i, v = data_temp[[s]][[5]], xi = data_temp[[s]][[4]],
-                       logLik_pert = logLik, deviance = deviance, pearson = pearson)
+    temp <- data.frame(rep = i, v = data_temp[[s]][[5]],
+                       xi = data_temp[[s]][[4]], logLik_pert = logLik,
+                       deviance = deviance, pearson = pearson)
     
     quantile_data <- rbind(quantile_data, temp)
   }
   
   data_temp$logLik
-  
   data_bin_X_fixi <- rbind(data_bin_X_fixi, data_temp)
 }
 
@@ -402,14 +411,6 @@ quantile_data_chosen <-
   quantile_data[quantile_data$xi %in% c(0, 1, 3, 5, 10000), ]
 
 plot_fixi(quantile_data_chosen)
-
-
-
-
-
-
-
-
 
 # sim3: Binomial IV identifiability ---
 
@@ -430,7 +431,6 @@ str(data_bin_X_quant)
 q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_bin_X_quant, q_values, xi_big = 10000)
 
-
 # ex4: Poisson with Anchor on X, H and Y --------------------------------------
 
 # Define variables for unperturbed and perturbed data set
@@ -440,7 +440,8 @@ def_poi_XHY <- defData(def_poi_XHY, varname = "H", dist = "normal",
                        formula = "0.5 * A", variance = 0.25)
 def_poi_XHY <- defData(def_poi_XHY, varname = "X", dist = "normal", 
                        formula = "2 * H + A", variance = 0.25)
-def_poi_XHY <- defData(def_poi_XHY, varname = "Y", dist = "poisson", link = "log", 
+def_poi_XHY <- defData(def_poi_XHY, varname = "Y", dist = "poisson",
+                       link = "log", 
                        formula = "0.4 * X + 1 * H - A", variance = 1)
 
 def_poi_XHY_pert <- defData(varname = "A", dist = "normal", 
@@ -451,7 +452,8 @@ def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "H", dist = "normal",
                             formula = "0.5", variance = 0.25)
 def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "X", dist = "normal", 
                             formula = "2 * H + v", variance = 0.25)
-def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y", dist = "poisson", link = "log",
+def_poi_XHY_pert <- defData(def_poi_XHY_pert, varname = "Y", dist = "poisson",
+                            link = "log",
                             formula = "0.4 * X + 1 * H - 1.5", variance = 1)
 
 # Parameters of linear predictor
@@ -468,8 +470,8 @@ set.seed(21255)
 dd <- genData(1000, def_poi_XHY)
 dd_pert <- genData(1000, def_poi_XHY_pert)
 
-eta <- b*dd$X + h * dd$H + a * dd$A
-eta_pert <- b*dd_pert$X + h * dd_pert$H + a_pert * dd_pert$A
+eta <- b * dd$X + h * dd$H + a * dd$A
+eta_pert <- b * dd_pert$X + h * dd_pert$H + a_pert * dd_pert$A
 
 gg_hist <- data.frame(eta = c(eta, eta_pert),
                       mu = c(exp(eta), exp(eta_pert)),
@@ -481,15 +483,14 @@ phist <- gghistogram(
   gg_hist, x = "eta", 
   add = "mean", rug = FALSE,
   fill = "data", palette = c("#FF6666", "#00AFBB"),
-  bins = 30
-) + xlab(expression(eta)) + rremove("legend")
+  bins = 30) + xlab(expression(eta)) + rremove("legend")
 
 pdensity <- ggdensity(
   gg_hist, x = "eta", 
   color= "data", palette = c("#FF6666", "#00AFBB"),
-  alpha = 0,
-) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  alpha = 0) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)),
+                     position = "right")  +
   theme_half_open(11, rel_small = 1) +
   rremove("x.axis")+
   rremove("xlab") +
@@ -538,7 +539,6 @@ str(data_poi_XHY_quant)
 q_values <- seq(0, 1, by = 0.001)
 plot_quant(data_poi_XHY_quant, q_values, xi_big = 10000)
 
-
 # ex5: Label Noise Example ----------------------------------------------------
 
 # Define variables for unperturbed and perturbed data set
@@ -559,21 +559,19 @@ def_LN_pert <- defData(varname = "A", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
                        formula = 0.8) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "C", dist = "binomial", link = "logit",
+def_LN_pert <- defData(def_LN_pert, varname = "C", dist = "binomial",
+                       link = "logit",
                        formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "H", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
                        formula = "2 * H", variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial",
+                       link = "logit", 
                        formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - C)")
 
-# sim0: General ---
-
-set.seed(68465)
-# Distribution histogram
 # Parameters of linear predictor
 b <- 0.4
 h <- 1
@@ -582,7 +580,8 @@ c <- -1
 t <- -2
 v_pert <- 0.8
 
-# Distribution histogram
+# sim0: Histograms and bar plots
+set.seed(68465)
 dd <- genData(1000, def_LN)
 dd_pert <- genData(1000, def_LN_pert)
 
@@ -591,17 +590,10 @@ eta_pert <- c + b * dd_pert$X + h * dd_pert$H
 
 tau <- t + dd$A
 tau_pert <- t + v_pert
-exp(tau_pert)/(1+exp(tau_pert))
-
-
-gg_hist <- data.frame(tau = c(tau, rep(tau_pert, 1000)),
-                      mu = c(exp(tau)/(1+exp(tau)), rep(exp(tau_pert)/(1+exp(tau_pert)),1000)),
-                      C = c(dd$C, dd_pert$C),
-                      data = c(rep("unpert", length(tau)),
-                               rep("pert", length(tau))))
+exp(tau_pert) / (1 + exp(tau_pert))
 
 gg_hist <- data.frame(tau = tau,
-                      mu = exp(tau)/(1+exp(tau)),
+                      mu = exp(tau) / (1 + exp(tau)),
                       C = dd$C,
                       data = rep("unpert", length(tau)))
 
@@ -613,15 +605,14 @@ phist <- gghistogram(
   gg_hist, x = "mu", 
   add = "mean", rug = FALSE,
   fill = "data", palette = c("#00AFBB"),
-  bins = 30
-) + xlab(expression(p[C])) + rremove("legend")
+  bins = 30) + xlab(expression(p[C])) + rremove("legend")
 
 pdensity <- ggdensity(
   gg_hist, x = "mu", 
   color= "data", palette = c( "#00AFBB"),
-  alpha = 0,
-) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  alpha = 0) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)),
+                     position = "right")  +
   theme_half_open(11, rel_small = 1) +
   rremove("x.axis")+
   rremove("xlab") +
@@ -646,61 +637,6 @@ arr <- ggarrange(gg_tau, gg_C,
 arr
 
 #ggsave(filename = "exLNhist.pdf", plot = arr, height = 4, width = 6)
-
-
-
-
-# Parameters of linear predictor
-b <- 0.4
-h <- 1
-c <- -1
-
-t <- -2
-v_pert <- 0.8
-
-# Distribution histogram
-dd <- genData(1000, def_LN)
-dd_pert <- genData(1000, def_LN_pert)
-
-eta <- c + b * dd$X + h * dd$H
-eta_pert <- c + b * dd_pert$X + h * dd_pert$H
-
-tau <- t + dd$A
-tau_pert <- t + v_pert
-
-par(mfrow = c(3,3))
-hist(tau, breaks = 100)
-hist(exp(tau)/(1+exp(tau)), breaks = 100)
-hist(dd$B, breaks = 100)
-hist(eta, breaks = 100)
-hist(exp(eta)/(1+exp(eta)), breaks = 100)
-hist(dd$Yorg, breaks = 100)
-hist(dd$Y, breaks = 100)
-
-par(mfrow = c(3,3))
-hist(tau_pert, breaks = 100)
-hist(exp(tau_pert)/(1+exp(tau_pert)), breaks = 100)
-hist(dd_pert$B, breaks = 100)
-hist(eta_pert, breaks = 100)
-hist(exp(eta_pert)/(1+exp(eta_pert)), breaks = 100)
-hist(dd_pert$Yorg, breaks = 100)
-hist(dd_pert$Y, breaks = 100)
-
-exp(tau_pert)/(1+exp(tau_pert))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # sim1: Label Noise with fixed v ---
 
@@ -787,7 +723,8 @@ def_LN_pert <- defData(varname = "A", dist = "normal",
                        formula = 0, variance = 0.01)
 def_LN_pert <- defData(def_LN_pert, varname = "v", 
                        formula = 0.6) # set perturbation strength
-def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial", link = "logit",
+def_LN_pert <- defData(def_LN_pert, varname = "B", dist = "binomial",
+                       link = "logit",
                        formula = "-2 + v", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "vH", 
                        formula = 0.4) # set perturbation strength
@@ -797,7 +734,8 @@ def_LN_pert <- defData(def_LN_pert, varname = "vX",
                        formula = -0.5) # set perturbation strength
 def_LN_pert <- defData(def_LN_pert, varname = "X", dist = "normal", 
                        formula = "2 * H + vX", variance = 0.01)
-def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial", link = "logit", 
+def_LN_pert <- defData(def_LN_pert, varname = "Yorg", dist = "binomial",
+                       link = "logit", 
                        formula = "-1 + 0.4 * X + 1 * H", variance = 1)
 def_LN_pert <- defData(def_LN_pert, varname = "Y", dist = "binary", 
                        formula = "abs(Yorg - B)")
@@ -810,7 +748,7 @@ c <- -1
 t <- -2
 v_pert <- 0.6
 
-# Distribution histogram
+# sim0: Histograms and bar plots
 dd <- genData(1000, def_LN)
 dd_pert <- genData(1000, def_LN_pert)
 
@@ -819,26 +757,6 @@ eta_pert <- c + b * dd_pert$X + h * dd_pert$H
 
 tau <- t + dd$A
 tau_pert <- t + v_pert
-
-par(mfrow = c(3,3))
-hist(tau, breaks = 100)
-hist(exp(tau)/(1+exp(tau)), breaks = 100)
-hist(dd$B, breaks = 100)
-hist(eta, breaks = 100)
-hist(exp(eta)/(1+exp(eta)), breaks = 100)
-hist(dd$Yorg, breaks = 100)
-hist(dd$Y, breaks = 100)
-
-par(mfrow = c(3,3))
-hist(tau_pert, breaks = 100)
-hist(exp(tau_pert)/(1+exp(tau_pert)), breaks = 100)
-hist(dd_pert$B, breaks = 100)
-hist(eta_pert, breaks = 100)
-hist(exp(eta_pert)/(1+exp(eta_pert)), breaks = 100)
-hist(dd_pert$Yorg, breaks = 100)
-hist(dd_pert$Y, breaks = 100)
-
-exp(tau_pert)/(1+exp(tau_pert))
 
 # sim0: histograms and bar plots
 gg_hist <- data.frame(tau = tau,
@@ -861,15 +779,14 @@ pdensity <- ggdensity(
   color= "data", palette = c( "#00AFBB"),
   alpha = 0,
 ) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)), position = "right")  +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05)),
+                     position = "right")  +
   theme_half_open(11, rel_small = 1) +
   rremove("x.axis")+
   rremove("xlab") +
   rremove("x.text") +
   rremove("x.ticks") +
   rremove("legend") +
-  #annotate("text", label= expression(p[C]^pert), colour = 1, x = 0.143, y = 25) +
-  #annotate("text", label= "= 0.198", colour = 1, x = 0.1503, y = 24.8)
   annotate(geom = 'text', x = 0.145, y = 25,
              label = "p[C]^pert %~~% 0.198",
              parse = TRUE)
@@ -888,11 +805,7 @@ arr <- ggarrange(gg_tau, gg_C,
                  ncol = 1, nrow = 2, common.legend = TRUE)
 arr
 
-ggsave(filename = "exLNhist.pdf", plot = arr, height = 4, width = 6)
-
-
-
-
+#ggsave(filename = "exLNhist.pdf", plot = arr, height = 4, width = 6)
 
 # sim1: Label Noise with fixed v ---
 
@@ -905,11 +818,6 @@ head(data_LN_fivi)
 summary(data_LN_fivi)
 
 plot_fivi_X(data_LN_fivi)
-
-
-
-
-
 
 # sim4: Label Noise several quantiles ---
 
