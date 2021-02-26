@@ -1,4 +1,5 @@
-Generalized Linear Anchor Regression
+Supplementary material for Master Thesis Generalized Linear Anchor
+Regression
 ================
 Maic Rakitta
 2021-02-26

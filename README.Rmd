@@ -1,5 +1,5 @@
 ---
-title: "Generalized Linear Anchor Regression"
+title: "Supplementary material for Master Thesis Generalized Linear Anchor Regression"
 author: "Maic Rakitta"
 date: "`r Sys.Date()`"
 output: github_document
